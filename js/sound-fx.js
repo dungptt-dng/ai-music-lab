@@ -57,6 +57,7 @@
         musicBus = context.createGain();
         musicBus.gain.value = MUSIC_LEVEL;
         musicBus.connect(musicDuck);
+        if (global.AudioEngine) global.AudioEngine.registerContext(context);   // đánh thức lại trên điện thoại
       }
       if (context.state !== 'running' && context.resume) context.resume().catch(function () {});
     } catch (err) {

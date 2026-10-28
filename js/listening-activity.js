@@ -161,6 +161,7 @@
           state.round.finished = true;
           state.question = null;
           renderStage();
+          shared.celebrate('nghe-cao-do', 'Xong lượt thử thách ' + state.round.total + ' câu');
           return;
         }
         state.round.number += 1;

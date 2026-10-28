@@ -13,6 +13,7 @@ các hoạt động của học sinh dùng đầy đủ.
 > không gửi dữ liệu lên mạng. Riêng **Trợ lý giáo viên** dùng AI (Claude của Anthropic) qua máy chủ Cloudflare Pages:
 > mã đã viết xong và đã kiểm thử với AI giả lập, **chưa chạy với API thật**. Chi tiết: [docs/KIEN-TRUC-AI.md](docs/KIEN-TRUC-AI.md).
 
+Mở `index.html` (không kèm `#…`) sẽ vào **Trang chủ** có linh vật Bé Nốt, 8 phím cầu vồng và 6 thẻ hoạt động.
 Mỗi hoạt động có đường dẫn riêng để giáo viên mở thẳng: `index.html#khuong-nhac`, `index.html#nghe-cao-do`,
 `index.html#trac-nghiem`, `index.html#keo-tha`, `index.html#sang-tao`, `index.html#bao-cao`.
 Trang của giáo viên: `index.html#tro-ly-giao-vien` (đường dẫn ở chân trang, không nằm trên thanh của học sinh).
@@ -92,7 +93,9 @@ tần suất cho `/api/tro-ly-giao-vien` (xem mục 5 của tài liệu kiến t
 | `js/report.js` | Hoạt động 6: Báo cáo (phiên này / tích lũy), **cách tính** (có chú thích), xuất CSV/JSON, in |
 | `js/practice-advisor.js` | Gợi ý luyện tập tiếp theo trong Báo cáo – **5 quy tắc cố định, không dùng AI** (có chú thích) |
 | `js/teacher-assistant.js` | Trang Trợ lý giáo viên: form, gọi máy chủ của trường, hiển thị kết quả đã kiểm tra, tải file |
-| `js/app.js` | Thanh điều hướng giữa các hoạt động |
+| `js/app.js` | Thanh điều hướng; nối tiếng chuông, linh vật, pháo giấy vào kết quả trả lời (không đổi cách chấm) |
+| `js/sound-fx.js` | Âm thanh giao diện: chuông đúng, tiếng động viên, tiếng bấm, giai điệu chúc mừng, nhạc nền |
+| `js/fun-ui.js` | Linh vật Bé Nốt, Trang chủ, nút bật/tắt âm thanh, pháo giấy |
 | `functions/_lib/tro-ly-core.js` | Lõi máy chủ AI: kiểm tra mã giáo viên/tham số, lời nhắn gửi Claude, **kiểm tra lại đáp án bằng quy tắc** |
 | `functions/api/tro-ly-giao-vien.js` | Cloudflare Pages Function: gọi Claude bằng SDK chính thức của Anthropic |
 | `docs/KIEN-TRUC-AI.md` | Kiến trúc AI: bảng 4 loại chức năng, luồng dữ liệu, bảo mật, chi phí ước tính |
@@ -134,13 +137,16 @@ Khóa Sol trên khuông là đường viền nguyên bản của glyph gClef (U+
 | Gợi ý luyện tập tiếp theo (nốt hay nhầm, hoạt động còn yếu, lên mức, thử hoạt động mới) – quy tắc, không AI | ✅ Mới làm ở Giai đoạn 5, đã kiểm thử |
 | Trợ lý giáo viên (AI – Claude): tạo câu hỏi theo mức độ, đáp án được máy chủ kiểm tra lại bằng quy tắc | 🧪 Mã xong, kiểm thử với AI giả lập; **chưa chạy với API thật** |
 | Trợ lý giáo viên (AI – Claude): gợi ý kế hoạch hoạt động âm nhạc dùng các mục của ứng dụng | 🧪 Mã xong, kiểm thử với AI giả lập; **chưa chạy với API thật** |
+| Giao diện vui (bổ sung): Trang chủ có 6 thẻ hoạt động và 8 phím cầu vồng, linh vật Bé Nốt phản ứng đúng/sai, nốt cầu vồng, pháo giấy khi hoàn thành | ✅ Đã làm, đã kiểm thử tự động (pháo giấy, màu sắc: đã xem trên trình duyệt) |
+| Âm thanh giao diện: tiếng chuông khi đúng, tiếng động viên khi sai, tiếng bấm nút, giai điệu chúc mừng, nhạc nền (mặc định tắt) – đều tổng hợp bằng Web Audio, không dùng AI | ✅ Đã làm, đã kiểm thử phần điều khiển; **chưa nghe thử bằng tai** |
 | Triển khai Cloudflare Pages kèm máy chủ AI | 🧪 Có file cấu hình; **chưa triển khai thật** |
 | AI hỗ trợ học sinh sáng tạo giai điệu, giải thích ý tưởng | 💡 Mới là đề xuất (cần cơ chế thông báo/đồng ý vì là dữ liệu trẻ em) |
 | Lưu trực tuyến, tài khoản, đồng bộ nhiều thiết bị, theo dõi theo tên học sinh | ❌ Không có – không được tuyên bố |
 
 ## 4. Kết quả kiểm thử tự động (28/10/2026, Chromium và Microsoft Edge)
 
-**155/155 phép kiểm thử đạt.** Với cả 8 nốt, trang kiểm thử đối chiếu với bảng chuẩn trong LENH.docx:
+**163/163 phép kiểm thử đạt** (155 phép của Giai đoạn 1–6 và 8 phép cho giao diện vui). Với cả 8 nốt,
+trang kiểm thử đối chiếu với bảng chuẩn trong LENH.docx:
 
 - tên tiếng Việt, ký hiệu quốc tế;
 - tần số: so với giá trị tính toán, và **đo lại từ âm thanh tổng hợp thật** (sai số dưới 0,3%);
@@ -188,7 +194,18 @@ Các nhóm kiểm thử khác:
 Các nút lưu/xuất file chỉ được kiểm thử qua hàm giả lập tải xuống, và lệnh in qua hàm giả lập;
 việc trình duyệt thật lưu file vào máy và bản in thật cần kiểm tra thủ công (xem dưới).
 
+- Giao diện vui (8): Trang chủ có 6 thẻ dẫn đúng 6 hoạt động; 8 phím cầu vồng phát đúng tần số Đô₄ → Đô₅;
+  mặc định có âm hiệu ứng, tắt nhạc nền, bật/tắt được, không ghi vào trình duyệt; không phát âm thanh khi chưa có
+  thao tác thật của người dùng; nhạc nền tự tạm dừng ở Nghe cao độ và Trắc nghiệm; sai rồi đúng ở Tìm nốt → tiếng
+  động viên rồi tiếng chuông (chờ 0,45 giây cho nốt vang xong), linh vật phản ứng theo; Kéo thả đủ 8 nốt → chúc mừng
+  đúng một lần; pháo giấy tự biến mất; nốt cầu vồng chỉ hiện ở Khám phá khi bật tên nốt (Tìm nốt và khi ẩn tên thì
+  cùng một màu, để màu không "nhắc bài").
+
 ## 5. Checklist kiểm tra thủ công (máy tự động không thay được)
+
+- [ ] Giao diện vui – nghe bằng tai: tiếng chuông đúng, tiếng động viên khi sai, giai điệu chúc mừng có vui, không
+  chói, không át tiếng nốt của bài học; nhạc nền có nhẹ nhàng và có làm học sinh xao nhãng không.
+- [ ] Giao diện vui – máy chiếu lớp học: màu cầu vồng (nhất là Mi₄ màu vàng) đọc rõ không; pháo giấy có làm rối mắt không.
 
 - [ ] Nghe bằng tai: 8 nốt đi lên đều, Đô₅ cao hơn Đô₄ đúng một quãng tám, âm không bị rè hay có tiếng "tách".
 - [ ] Âm lượng mặc định không quá to với loa lớp học; thanh trượt giảm được về im lặng.

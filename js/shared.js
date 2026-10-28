@@ -39,6 +39,15 @@
     return pick(PRAISES, random);
   }
 
+  /*
+   * Báo "hoàn thành một chặng" (xong lượt thử thách, xong bài kéo thả…). Khung ứng dụng nghe sự kiện
+   * này để phát giai điệu chúc mừng và bắn pháo giấy; hoạt động không cần biết chuyện đó.
+   */
+  var CELEBRATE_EVENT = 'aiml-celebrate';
+  function celebrate(activity, reason) {
+    global.dispatchEvent(new CustomEvent(CELEBRATE_EVENT, { detail: { activity: activity, reason: reason } }));
+  }
+
   function percent(part, whole) {
     return whole > 0 ? Math.round((part / whole) * 100) + '%' : '—';
   }
@@ -102,6 +111,8 @@
     pick: pick,
     shuffle: shuffle,
     praise: praise,
+    celebrate: celebrate,
+    CELEBRATE_EVENT: CELEBRATE_EVENT,
     percent: percent,
     bindVolumeSlider: bindVolumeSlider,
     VOLUME_SLIDER_HTML: VOLUME_SLIDER_HTML,

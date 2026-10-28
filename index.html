@@ -5,12 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>AI MUSIC LAB – Phòng thí nghiệm âm nhạc số</title>
   <meta name="description" content="Học sinh lớp 4–5 nhận biết, đọc và nghe 8 nốt nhạc trên khuông khóa Sol.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect x='40' y='6' width='5' height='38' rx='2.5' fill='%233f35a8'/%3E%3Cpath d='M44 6C56 10 61 20 54 31C55 22 51 17 44 15Z' fill='%23ff8a3d'/%3E%3Cellipse cx='30' cy='45' rx='16' ry='12.5' fill='%235b4fd6' transform='rotate(-18 30 45)'/%3E%3Ccircle cx='24' cy='42' r='4' fill='%23fff'/%3E%3Ccircle cx='35' cy='39.5' r='4' fill='%23fff'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap&subset=vietnamese" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <div class="sky" aria-hidden="true">
+    <span>♪</span><span>♫</span><span>♩</span><span>♬</span><span>♪</span><span>♫</span><span>♩</span><span>♬</span>
+  </div>
   <header class="app-header">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">♪</span>
@@ -19,8 +23,10 @@
         <p class="brand-sub">Phòng thí nghiệm âm nhạc số · Lớp 4–5</p>
       </div>
     </div>
+    <div class="sound-bar" role="group" aria-label="Âm thanh giao diện"></div>
     <nav class="app-nav" role="tablist" aria-label="Các hoạt động">
-      <button type="button" role="tab" data-view="khuong-nhac" aria-selected="true"><span aria-hidden="true">🎼</span> Khuông nhạc</button>
+      <button type="button" role="tab" data-view="trang-chu" aria-selected="true"><span aria-hidden="true">🏠</span> Trang chủ</button>
+      <button type="button" role="tab" data-view="khuong-nhac" aria-selected="false"><span aria-hidden="true">🎼</span> Khuông nhạc</button>
       <button type="button" role="tab" data-view="nghe-cao-do" aria-selected="false"><span aria-hidden="true">👂</span> Nghe cao độ</button>
       <button type="button" role="tab" data-view="trac-nghiem" aria-selected="false"><span aria-hidden="true">✅</span> Trắc nghiệm</button>
       <button type="button" role="tab" data-view="keo-tha" aria-selected="false"><span aria-hidden="true">🎯</span> Kéo thả</button>
@@ -30,7 +36,8 @@
   </header>
 
   <main class="app-main">
-    <section id="view-khuong-nhac" aria-label="Khuông nhạc tương tác"></section>
+    <section id="view-trang-chu" aria-label="Trang chủ"></section>
+    <section id="view-khuong-nhac" aria-label="Khuông nhạc tương tác" hidden></section>
     <section id="view-nghe-cao-do" aria-label="Nghe cao độ" hidden></section>
     <section id="view-trac-nghiem" aria-label="Trắc nghiệm" hidden></section>
     <section id="view-keo-tha" aria-label="Kéo thả nốt vào khuông" hidden></section>
@@ -40,8 +47,9 @@
   </main>
 
   <footer class="app-footer">
-    <p>Phiên bản nguyên mẫu – Giai đoạn 5: Khuông nhạc tương tác, Nghe cao độ, Trắc nghiệm, Kéo thả nốt,
-      Phòng sáng tạo giai điệu, Báo cáo kèm gợi ý luyện tập. Âm thanh được tổng hợp bằng Web Audio API. Câu hỏi và gợi ý
+    <p>Phiên bản nguyên mẫu: Khuông nhạc tương tác, Nghe cao độ, Trắc nghiệm, Kéo thả nốt,
+      Phòng sáng tạo giai điệu, Báo cáo kèm gợi ý luyện tập. Âm thanh (cả tiếng chuông, giai điệu chúc mừng, nhạc nền)
+      được tổng hợp bằng Web Audio API. Linh vật Bé Nốt chỉ là hình vẽ vui, không phải AI. Câu hỏi và gợi ý
       luyện tập được tạo theo quy tắc nhạc lý cố định, <strong>không dùng AI</strong>. Các hoạt động của học sinh không hỏi
       họ tên và không gửi dữ liệu lên mạng; kết quả chỉ được lưu trong trình duyệt khi người dùng bật lưu ở mục Báo cáo.</p>
     <p><a href="#tro-ly-giao-vien">Dành cho giáo viên: Trợ lý soạn câu hỏi và hoạt động (dùng AI – Claude của Anthropic)</a>
@@ -55,6 +63,8 @@
   <script src="js/practice-log.js"></script>
   <script src="js/staff.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/sound-fx.js"></script>
+  <script src="js/fun-ui.js"></script>
   <script src="js/staff-activity.js"></script>
   <script src="js/listening-activity.js"></script>
   <script src="js/question-bank.js"></script>

@@ -208,6 +208,7 @@
         burstStars(staff.noteElement(note.id));
         renderFindPanel('✓ ' + shared.praise(random) +' Đây là nốt <strong>' + escapeHtml(note.label) + '</strong> – ' +
           escapeHtml(note.position) + '.', 'is-good');
+        if (state.stats.completed % 5 === 0) shared.celebrate('khuong-nhac', 'Tìm đúng ' + state.stats.completed + ' nốt');
         nextQuestionTimer = setTimeout(newQuestion, NEXT_QUESTION_DELAY_MS);
         return;
       }

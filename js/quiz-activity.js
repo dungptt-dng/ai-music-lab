@@ -115,6 +115,7 @@
         state.soundPlayed = false;
       }
       render();
+      if (state.finished) shared.celebrate('trac-nghiem', 'Xong ' + state.questions.length + ' câu trắc nghiệm');
     }
 
     function correctCount() {

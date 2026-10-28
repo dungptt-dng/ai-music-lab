@@ -1132,7 +1132,7 @@
         return Promise.resolve().then(open('trac-nghiem')).then(open('nghe-cao-do')).then(open('keo-tha'))
           .then(open('sang-tao')).then(open('bao-cao')).then(open('khuong-nhac')).then(function () {
           assert(errors.length === 0, errors.join('; '));
-          assert(win.document.querySelectorAll('.activity').length === 6, 'Không đủ 6 hoạt động');
+          assert(win.document.querySelectorAll('.activity:not(.home)').length === 6, 'Không đủ 6 hoạt động');
           assert(win.document.querySelector('#view-keo-tha .drag-board, #view-keo-tha .staff-svg'), 'Kéo thả chưa vẽ khuông');
           assert(win.document.querySelector('#view-sang-tao .melody-palette'), 'Phòng sáng tạo chưa có bảng nốt');
           assert(win.document.querySelector('#view-bao-cao [data-ref-empty]'), 'Báo cáo chưa hiện trạng thái chưa có dữ liệu');
@@ -2266,6 +2266,158 @@
   ];
 
   // ---------- Chạy các nhóm kiểm thử ----------
+  // =====================================================================
+  // NHÓM – Giao diện vui: trang chủ, âm thanh giao diện, linh vật, pháo giấy (bổ sung)
+  // =====================================================================
+  function fillOf(node) { return node.ownerDocument.defaultView.getComputedStyle(node).fill; }
+
+  var FUN_TESTS = [
+    ['Mở trang chính: hiện Trang chủ với 6 thẻ hoạt động thật; bấm thẻ thì vào đúng hoạt động', function () {
+      return loadAppFrame('').then(function (win) {
+        var doc = win.document;
+        assert(!doc.getElementById('view-trang-chu').hidden, 'Trang chủ không hiện');
+        assert(doc.querySelector('[data-view="trang-chu"]').getAttribute('aria-selected') === 'true', 'Tab Trang chủ chưa được đánh dấu');
+        var cards = Array.prototype.map.call(doc.querySelectorAll('#view-trang-chu .home-card'), function (a) { return a.getAttribute('href'); });
+        assert(cards.join() === '#khuong-nhac,#nghe-cao-do,#trac-nghiem,#keo-tha,#sang-tao,#bao-cao', 'Thẻ: ' + cards.join());
+        doc.querySelector('#view-trang-chu .home-card[href="#keo-tha"]').click();
+        return waitFor(function () { return !doc.getElementById('view-keo-tha').hidden; }, 2000).then(function (shown) {
+          assert(shown, 'Bấm thẻ Kéo thả không mở hoạt động');
+          assert(doc.getElementById('view-trang-chu').hidden, 'Trang chủ vẫn hiện');
+          assert(doc.querySelector('#view-keo-tha .drag-board, #view-keo-tha .staff-svg'), 'Kéo thả chưa khởi tạo');
+          return '6 thẻ → 6 đường dẫn; thẻ Kéo thả mở đúng hoạt động';
+        });
+      });
+    }],
+    ['8 phím cầu vồng ở Trang chủ phát đúng tần số 8 nốt Đô₄ → Đô₅', function () {
+      return loadAppFrame('').then(function (win) {
+        var played = [];
+        win.AudioEngine.playNote = function (frequency) { played.push(frequency); return Promise.resolve(); };
+        var keys = win.document.querySelectorAll('#view-trang-chu .rainbow-key');
+        assert(keys.length === 8, 'Có ' + keys.length + ' phím');
+        Array.prototype.forEach.call(keys, function (key) { key.click(); });
+        var expected = MusicNotes.NOTES.map(function (n) { return n.frequency; });
+        assert(played.join() === expected.join(), 'Tần số: ' + played.join(', '));
+        var colors = Array.prototype.map.call(keys, function (k) { return win.getComputedStyle(k).backgroundColor; });
+        assert(new Set(colors).size === 8, 'Các phím không đủ 8 màu');
+        return played.map(function (f) { return f.toFixed(2); }).join(' · ') + ' Hz';
+      });
+    }],
+    ['Âm thanh giao diện: mặc định có âm hiệu ứng, tắt nhạc nền; không tự phát khi chưa có thao tác thật; không ghi vào trình duyệt', function () {
+      return loadAppFrame('#khuong-nhac').then(function (win) {
+        var doc = win.document, fx = win.SoundFx;
+        var storedBefore = win.localStorage.length;
+        var effects = doc.querySelector('[data-sound="effects"]'), music = doc.querySelector('[data-sound="music"]');
+        assert(fx.effectsOn() && !fx.musicOn(), 'Mặc định sai');
+        assert(effects.getAttribute('aria-pressed') === 'true' && music.getAttribute('aria-pressed') === 'false', 'Nút không khớp trạng thái');
+        music.click();
+        assert(fx.musicOn() && music.getAttribute('aria-pressed') === 'true', 'Không bật được nhạc nền');
+        assert(!fx.hasContext() && !fx.musicPlaying(), 'Âm thanh chạy dù chưa có thao tác thật của người dùng');
+        effects.click();
+        assert(!fx.effectsOn() && effects.querySelector('.sound-state').textContent === 'Tắt', 'Không tắt được âm hiệu ứng');
+        assert(win.localStorage.length === storedBefore, 'Lựa chọn âm thanh bị ghi vào trình duyệt');
+        return 'hiệu ứng Bật, nhạc nền Tắt; bật/tắt được; chưa tạo AudioContext; không ghi bộ nhớ';
+      });
+    }],
+    ['Nhạc nền tự tạm dừng ở Nghe cao độ, Trắc nghiệm; trở lại khi sang hoạt động khác', function () {
+      return loadAppFrame('#khuong-nhac').then(function (win) {
+        var doc = win.document, fx = win.SoundFx;
+        var music = doc.querySelector('[data-sound="music"]');
+        music.click();
+        doc.querySelector('[data-view="nghe-cao-do"]').click();
+        return waitFor(function () { return !doc.getElementById('view-nghe-cao-do').hidden; }, 2000).then(function () {
+          assert(!fx.musicAllowed(), 'Nhạc nền vẫn được phép ở Nghe cao độ');
+          assert(music.classList.contains('is-paused') && music.textContent.indexOf('Tạm dừng') !== -1, 'Nút không báo tạm dừng');
+          doc.querySelector('[data-view="trac-nghiem"]').click();
+          return waitFor(function () { return !doc.getElementById('view-trac-nghiem').hidden; }, 2000);
+        }).then(function () {
+          assert(!fx.musicAllowed(), 'Nhạc nền vẫn được phép ở Trắc nghiệm');
+          doc.querySelector('[data-view="sang-tao"]').click();
+          return waitFor(function () { return !doc.getElementById('view-sang-tao').hidden; }, 2000);
+        }).then(function () {
+          assert(fx.musicAllowed() && !music.classList.contains('is-paused'), 'Nhạc nền không trở lại ở Sáng tạo');
+          return 'Nghe cao độ, Trắc nghiệm: tạm dừng · Sáng tạo: bật lại';
+        });
+      });
+    }],
+    ['Trả lời sai rồi đúng ở Tìm nốt: tiếng động viên rồi tiếng chuông (chờ nốt vang xong), linh vật phản ứng theo', function () {
+      return loadAppFrame('#khuong-nhac').then(function (win) {
+        var doc = win.document, calls = [];
+        win.SoundFx.correct = function (delay) { calls.push('đúng@' + delay); };
+        win.SoundFx.wrong = function (delay) { calls.push('sai@' + delay); };
+        doc.querySelector('#view-khuong-nhac [data-mode="find"]').click();
+        var label = doc.querySelector('#view-khuong-nhac [data-ref-target]').textContent;
+        var target = win.MusicNotes.NOTES.filter(function (n) { return n.label === label; })[0];
+        var other = win.MusicNotes.NOTES.filter(function (n) { return n !== target; })[0];
+        function tap(id) {
+          doc.querySelector('#view-khuong-nhac .note[data-note="' + id + '"] .note-head')
+            .dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+        }
+        var mascot = doc.querySelector('.mascot-wrap');
+        tap(other.id);
+        assert(mascot.getAttribute('data-mood') === 'oops', 'Linh vật không động viên khi sai');
+        tap(target.id);
+        assert(mascot.getAttribute('data-mood') === 'happy', 'Linh vật không vui khi đúng');
+        assert(calls.join() === 'sai@0.45,đúng@0.45', 'Âm phản hồi: ' + calls.join());
+        assert(mascot.getAttribute('aria-hidden') === 'true', 'Linh vật không được ẩn với trình đọc màn hình');
+        return calls.join(' → ') + ' giây';
+      });
+    }],
+    ['Đặt xong 8 nốt ở Kéo thả: báo hoàn thành đúng một lần (để chúc mừng)', function () {
+      var events = [];
+      function onCelebrate(e) { events.push(e.detail); }
+      window.addEventListener(AppShared.CELEBRATE_EVENT, onCelebrate);
+      try {
+        var ctx = dragApp();
+        REFERENCE.forEach(function (ref, i) {
+          var p = dropPoint(ctx, expectedStep(ref), 0);
+          dragChip(ctx.host, ref.id, p.x, p.y);
+          if (i < 7) assert(events.length === 0, 'Chúc mừng quá sớm ở nốt thứ ' + (i + 1));
+        });
+      } finally {
+        window.removeEventListener(AppShared.CELEBRATE_EVENT, onCelebrate);
+      }
+      assert(events.length === 1 && events[0].activity === 'keo-tha', 'Số lần chúc mừng: ' + events.length);
+      return events[0].reason;
+    }],
+    ['Sự kiện hoàn thành: giai điệu chúc mừng, pháo giấy tự biến mất, linh vật nhảy mừng', function () {
+      return loadAppFrame('#keo-tha').then(function (win) {
+        var doc = win.document, fanfares = 0;
+        win.SoundFx.celebrate = function () { fanfares += 1; };
+        win.AppShared.celebrate('keo-tha', 'thử');
+        assert(fanfares === 1, 'Không phát giai điệu chúc mừng');
+        assert(doc.querySelector('.mascot-wrap').getAttribute('data-mood') === 'party', 'Linh vật không nhảy mừng');
+        var reduced = win.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var layer = doc.querySelector('.confetti');
+        assert(reduced ? !layer : layer && layer.getAttribute('aria-hidden') === 'true', 'Pháo giấy không đúng');
+        return wait(3600).then(function () {
+          assert(!doc.querySelector('.confetti'), 'Pháo giấy không tự biến mất');
+          return reduced ? 'giảm chuyển động: không bắn pháo giấy' : 'pháo giấy hiện rồi tự biến mất sau 3,4 giây';
+        });
+      });
+    }],
+    ['Nốt cầu vồng chỉ ở Khám phá khi hiện tên; Tìm nốt và khi ẩn tên thì nốt cùng màu (không nhắc bài)', function () {
+      return loadAppFrame('#khuong-nhac').then(function (win) {
+        var doc = win.document;
+        doc.body.classList.add('no-transition');
+        var style = doc.createElement('style');
+        style.textContent = '* { transition: none !important; }';
+        doc.head.appendChild(style);
+        function colors() {
+          return new Set(Array.prototype.map.call(doc.querySelectorAll('#view-khuong-nhac .note-head'), fillOf)).size;
+        }
+        assert(colors() === 8, 'Khám phá: ' + colors() + ' màu');
+        doc.querySelector('#view-khuong-nhac [data-ref="labelsToggle"]').click();
+        var hidden = colors();
+        doc.querySelector('#view-khuong-nhac [data-ref="labelsToggle"]').click();
+        doc.querySelector('#view-khuong-nhac [data-mode="find"]').click();
+        var find = colors();
+        assert(hidden === 1, 'Ẩn tên nốt mà vẫn ' + hidden + ' màu');
+        assert(find === 1, 'Tìm nốt mà vẫn ' + find + ' màu');
+        return 'Khám phá 8 màu · ẩn tên 1 màu · Tìm nốt 1 màu';
+      });
+    }]
+  ];
+
   var SECTIONS = [
     ['Khuông nhạc tương tác (Giai đoạn 1)', STAFF_TESTS],
     ['Nghe cao độ (Giai đoạn 2)', LISTENING_TESTS],
@@ -2277,7 +2429,8 @@
     ['Gợi ý luyện tập tiếp theo – quy tắc cố định, không dùng AI (Giai đoạn 5)', ADVISOR_TESTS],
     ['Máy chủ Trợ lý giáo viên – AI giả lập, không gọi API thật (Giai đoạn 5)', SERVER_TESTS],
     ['Trang Trợ lý giáo viên (Giai đoạn 5)', TEACHER_TESTS],
-    ['Khung ứng dụng', APP_TESTS]
+    ['Khung ứng dụng', APP_TESTS],
+    ['Giao diện vui: trang chủ, âm thanh giao diện, linh vật, pháo giấy (bổ sung)', FUN_TESTS]
   ];
 
   function runSection(section) {

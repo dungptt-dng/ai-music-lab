@@ -233,6 +233,7 @@
       }
       renderPalette();
       renderStats();
+      if (correct && state.placed.length === NOTES.length) shared.celebrate('keo-tha', 'Đặt đúng cả 8 nốt');
     }
 
     function undoLast() {

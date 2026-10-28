@@ -153,8 +153,7 @@ body {
 button, .switch { touch-action: manipulation; }
 
 .staff-line { stroke: var(--staff-ink); stroke-width: 1.6; }
-.clef-stroke { fill: none; stroke: var(--staff-ink); stroke-width: 4.2; stroke-linecap: round; stroke-linejoin: round; }
-.clef-dot { fill: var(--staff-ink); }
+.clef-glyph { fill: var(--staff-ink); stroke: none; }
 
 .note { cursor: pointer; outline: none; -webkit-tap-highlight-color: transparent; }
 .note-hit { fill: transparent; }

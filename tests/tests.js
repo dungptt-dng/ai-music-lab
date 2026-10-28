@@ -462,26 +462,51 @@
       }
       return 'dòng 1 → dòng 5 cách đều ' + StaffRenderer.LINE_GAP + ' đơn vị';
     }],
-    ['Có khóa Sol; vòng xoắn của khóa ôm quanh dòng 2', function () {
+    ['Khóa Sol là glyph gClef của Bravura (SMuFL); vòng xoắn ôm quanh dòng 2', function () {
       var ctx = mountFresh();
-      var clef = ctx.app.staff.svg.querySelector('.treble-clef path');
-      assert(clef, 'Không có khóa Sol');
-      // Vòng xoắn = lệnh M và 4 đoạn cong đầu tiên của đường vẽ (trước nét chéo đi lên).
-      var pieces = clef.getAttribute('d').split('C');
-      var body = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      body.setAttribute('d', pieces.slice(0, 5).join('C'));
-      clef.parentNode.appendChild(body);
-      var total = body.getTotalLength();
-      var ys = [];
-      for (var t = 0; t <= total; t += 1) ys.push(body.getPointAtLength(t).y);
-      body.remove();
-      var top = Math.min.apply(null, ys), bottom = Math.max.apply(null, ys);
-      var center = (top + bottom) / 2;
-      var gLineLocal = 3 * StaffRenderer.LINE_GAP; // dòng 2 trong toạ độ cục bộ của khóa
-      assert(top < gLineLocal && bottom > gLineLocal, 'Thân khóa không cắt qua dòng 2');
-      assert(Math.abs(center - gLineLocal) <= StaffRenderer.LINE_GAP / 2,
-        'Tâm vòng xoắn lệch ' + (center - gLineLocal).toFixed(1) + ' so với dòng 2');
-      return 'tâm vòng xoắn cách dòng 2: ' + (center - gLineLocal).toFixed(1) + ' đơn vị (< nửa khe)';
+      var svg = ctx.app.staff.svg;
+      var group = svg.querySelector('.treble-clef');
+      assert(group && group.getAttribute('data-glyph') === 'gClef', 'Không có khóa Sol gClef');
+      var clef = group.querySelector('path');
+      // Đường viền đúng là glyph Bravura: khung bao khớp số liệu chính thức của Bravura
+      // (bBoxNE 2,684 / 4,392 và bBoxSW 0 / −2,632 khoảng dòng; 1 khoảng dòng = 250 đơn vị).
+      var box = clef.getBBox();
+      assert(Math.abs(box.x) < 1 && Math.abs(box.width - 671) < 1 &&
+        Math.abs(box.y + 1098) < 1 && Math.abs(box.height - 1756) < 1,
+        'Khung bao không khớp glyph gClef của Bravura: ' + [box.x, box.y, box.width, box.height].join(', '));
+      // Gốc glyph (y = 0, theo SMuFL là dòng Sol) phải trùng dòng 2; cỡ khóa theo khoảng cách dòng.
+      var ys = lineYs(svg);
+      var m = group.transform.baseVal.consolidate().matrix;
+      var scale = StaffRenderer.LINE_GAP / 250;
+      assert(Math.abs(m.f - ys[2]) < 0.01, 'Gốc khóa ở y = ' + m.f + ', dòng 2 ở y = ' + ys[2]);
+      assert(Math.abs(m.a - scale) < 1e-6 && Math.abs(m.d - scale) < 1e-6, 'Cỡ khóa sai: ' + m.a);
+      var top = m.f + box.y * scale, bottom = m.f + (box.y + box.height) * scale;
+      assert(top < ys[5] && bottom > ys[1], 'Khóa phải vượt lên trên dòng 5 và xuống dưới dòng 1');
+      // Vòng xoắn ôm dòng 2: đi ngang theo dòng 2 gặp 4 đoạn nét (vòng ngoài và vòng trong
+      // ở cả hai bên); đi dọc giữa vòng xoắn gặp nét ở cả trên và dưới dòng 2.
+      function runs(points) {
+        var count = 0, inside = false;
+        points.forEach(function (p) {
+          var point = svg.createSVGPoint(); point.x = p[0]; point.y = p[1];
+          var fill = clef.isPointInFill(point);
+          if (fill && !inside) count++;
+          inside = fill;
+        });
+        return count;
+      }
+      var across = [], above = [], below = [];
+      for (var x = -10; x <= 700; x += 2) across.push([x, 0]);
+      for (var y = -250; y < 0; y += 2) above.push([336, y]);
+      for (var y2 = 2; y2 <= 250; y2 += 2) below.push([336, y2]);
+      var crossings = runs(across);
+      assert(crossings === 4, 'Dòng 2 cắt nét khóa ' + crossings + ' lần (cần 4)');
+      assert(runs(above) >= 1 && runs(below) >= 1, 'Vòng xoắn không bao quanh dòng 2');
+      // Khóa nằm ở đầu khuông, không chạm nốt đầu tiên.
+      var right = m.e + (box.x + box.width) * scale;
+      var firstHead = svg.querySelector('.note-head');
+      var firstLeft = Number(firstHead.getAttribute('cx')) - Number(firstHead.getAttribute('rx'));
+      assert(m.e > 0 && right < firstLeft, 'Khóa chồng lên nốt đầu tiên');
+      return 'gốc khóa trùng dòng 2 (y = ' + ys[2] + '); dòng 2 cắt vòng xoắn ' + crossings + ' lần';
     }],
     ['8 nốt đi lên đều, mỗi nốt cao hơn nốt trước đúng nửa khoảng dòng', function () {
       var ctx = mountFresh();

@@ -105,6 +105,10 @@ tần suất cho `/api/tro-ly-giao-vien` (xem mục 5 của tài liệu kiến t
 
 Muốn đổi "Sol" thành "Son" theo SGK của trường: sửa `VIETNAMESE_NAMES` trong `js/notes.js`.
 
+Khóa Sol trên khuông là đường viền nguyên bản của glyph gClef (U+E050) trong phông ký âm **Bravura 1.482**
+(chuẩn SMuFL) của Steinberg, trích thẳng từ `Bravura.otf`. Gốc glyph theo SMuFL nằm trên dòng Sol₄ nên được đặt
+đúng lên dòng 2. Phông Bravura dùng giấy phép SIL Open Font License 1.1, xem [licenses/Bravura-OFL.txt](licenses/Bravura-OFL.txt).
+
 ## 3. Bảng trạng thái chức năng (để dùng trung thực trong hồ sơ dự thi)
 
 | Chức năng | Trạng thái |

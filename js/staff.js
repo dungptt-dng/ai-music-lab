@@ -25,22 +25,36 @@
   var SYMBOL_Y = 236;
 
   /*
-   * Khóa Sol: đường nét được dựng sao cho vòng xoắn ôm quanh dòng 2 (dòng Sol),
-   * đúng quy ước "khóa Sol đặt trên dòng 2". Toạ độ cục bộ: dòng 5 ở y = 0,
-   * dòng 1 ở y = 80, dòng 2 ở y = 60.
+   * Khóa Sol: đường viền nguyên bản của glyph gClef (U+E050) trong phông ký âm Bravura 1.482
+   * (chuẩn SMuFL, © Steinberg Media Technologies GmbH, giấy phép SIL Open Font License 1.1 –
+   * xem licenses/Bravura-OFL.txt). Đường viền được trích thẳng từ file Bravura.otf, không vẽ lại.
+   * Đơn vị: 1 em = 1000, 1 khoảng dòng = 250; trục y hướng xuống như SVG.
+   * Theo SMuFL, gốc toạ độ (y = 0) của gClef nằm đúng trên dòng Sol₄ – tâm vòng xoắn –
+   * nên chỉ cần đặt gốc lên dòng 2 và co theo khoảng cách dòng.
    */
-  var TREBLE_CLEF_PATH =
-    'M 41 62 C 41 50 32 43 25 44 ' +       // từ tâm vòng xoắn (dòng 2) đi lên gần dòng 3
-    'C 16 45 10 53 10 62 ' +               // vòng sang trái, xuống
-    'C 10 76 21 85 31 85 ' +               // đáy vòng xoắn (ngay dưới dòng 1)
-    'C 43 85 50 76 49 64 ' +               // vòng lên bên phải
-    'C 48 51 38 45 30 39 ' +               // nét chéo đi lên
-    'C 21 31 17 18 21 4 ' +
-    'C 25 -12 33 -26 38 -29 ' +            // vòng trên cùng, cao hơn dòng 5
-    'C 43 -31 45 -20 41 -9 ' +
-    'C 38 0 33 6 33 14 ' +
-    'L 34 99 ' +                           // thân dọc xuống dưới khuông
-    'C 35 109 24 111 20 105';              // móc đuôi
+  var BRAVURA_G_CLEF_PATH =
+    'M376-415C374-427 376-428 382-434C398-449 419-470 438-491C522-583 572-702 572-815' +
+    'C572-902 548-988 507-1048C492-1070 466-1098 455-1098C441-1098 410-1072 390-1050' +
+    'C316-968 292-843 292-739C292-681 299-616 306-575C308-563 309-561 297-551' +
+    'C233-498 164-437 112-373C43-287 0-194 0-87C0 87 119 252 364 252C387 252 413 250 433 246' +
+    'C444 244 446 243 448 255C460 322 475 409 475 456C475 604 375 622 316 622' +
+    'C262 622 236 606 236 593C236 586 245 583 268 576C299 567 335 540 335 482' +
+    'C335 427 300 380 239 380C172 380 132 433 132 495C132 560 171 658 322 658' +
+    'C389 658 519 628 519 458C519 401 501 306 490 244C488 232 489 233 503 227' +
+    'C604 187 671 102 671-11C671-139 577-252 430-252C404-252 404-252 401-270Z' +
+    'M470-943C503-943 530-916 530-861C530-792 497-728 419-650C403-634 379-611 356-591' +
+    'C349-585 345-586 343-599C339-625 337-659 337-691C337-847 409-943 470-943Z' +
+    'M361-262C364-243 364-244 346-238C258-208 201-129 201-44C201 46 248 110 316 133' +
+    'C324 136 336 139 343 139C351 139 355 134 355 128C355 121 347 118 340 115' +
+    'C298 97 268 54 268 8C268-49 307-92 368-109C384-113 386-112 388-101L438 197' +
+    'C440 208 439 208 424 211C408 214 388 216 368 216C193 216 80 119 80-20' +
+    'C80-79 90-158 173-252C233-319 279-356 326-394C336-402 338-401 340-390Z' +
+    'M430-103C428-115 429-118 441-117C522-110 589-42 589 46C589 109 551 160 495 188' +
+    'C483 194 481 194 479 182Z';
+  var SMUFL_STAFF_SPACE = 250;                 // một khoảng dòng tính theo đơn vị phông
+  var CLEF_SCALE = LINE_GAP / SMUFL_STAFF_SPACE;
+  var G_LINE_STEP = 2;                         // dòng 2 = Sol₄ (vị trí 2 tính từ dòng 1)
+  var CLEF_X = STAFF_LEFT + 12;
 
   function yForStep(step) {
     return BOTTOM_LINE_Y - step * (LINE_GAP / 2);
@@ -74,11 +88,11 @@
   function drawTrebleClef(svg) {
     var group = el('g', {
       'class': 'treble-clef',
-      transform: 'translate(' + (STAFF_LEFT + 16) + ' ' + STAFF_TOP + ')',
+      'data-glyph': 'gClef',
+      transform: 'translate(' + CLEF_X + ' ' + yForStep(G_LINE_STEP) + ') scale(' + CLEF_SCALE + ')',
       'aria-hidden': 'true'
     }, svg);
-    el('path', { d: TREBLE_CLEF_PATH, 'class': 'clef-stroke' }, group);
-    el('circle', { cx: 22, cy: 101, r: 5.2, 'class': 'clef-dot' }, group);
+    el('path', { d: BRAVURA_G_CLEF_PATH, 'class': 'clef-glyph' }, group);
     return group;
   }
 

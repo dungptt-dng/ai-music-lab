@@ -104,24 +104,38 @@
   /*
    * Phát lần lượt một dãy tần số. onStep(index) được gọi đúng lúc nốt thứ index vang lên
    * để giao diện đánh dấu nốt; onDone() gọi khi phát xong (không gọi nếu bị dừng giữa chừng).
+   * options.gap / options.noteDuration: khoảng cách và độ vang chung cho mọi nốt (giây);
+   * options.gaps / options.noteDurations (mảng, tuỳ chọn): riêng từng nốt – dùng cho nốt đen,
+   * nốt trắng, nốt tròn có độ dài khác nhau.
    */
-  function playSequence(frequencies, options) {
-    options = options || {};
+  function sequenceTiming(count, options) {
     var gap = options.gap || 0.6;
     var noteDuration = options.noteDuration || 0.9;
+    var starts = [], durations = [], t = 0;
+    for (var i = 0; i < count; i++) {
+      starts.push(t);
+      durations.push(options.noteDurations ? options.noteDurations[i] : noteDuration);
+      t += options.gaps ? options.gaps[i] : gap;
+    }
+    return { starts: starts, durations: durations, total: count ? starts[count - 1] + durations[count - 1] : 0 };
+  }
+
+  function playSequence(frequencies, options) {
+    options = options || {};
+    var timing = sequenceTiming(frequencies.length, options);
     stopAll();
     return ensureRunning().then(function (ctx) {
       var start = ctx.currentTime + 0.05;
       frequencies.forEach(function (frequency, index) {
-        activeVoices.push(scheduleVoice(ctx, masterGain, frequency, start + index * gap, noteDuration));
+        activeVoices.push(scheduleVoice(ctx, masterGain, frequency, start + timing.starts[index], timing.durations[index]));
         sequenceTimers.push(setTimeout(function () {
           if (options.onStep) options.onStep(index);
-        }, 50 + index * gap * 1000));
+        }, 50 + timing.starts[index] * 1000));
       });
       sequenceTimers.push(setTimeout(function () {
         sequenceTimers = [];
         if (options.onDone) options.onDone();
-      }, 50 + ((frequencies.length - 1) * gap + noteDuration) * 1000));
+      }, 50 + timing.total * 1000));
     });
   }
 
@@ -166,6 +180,7 @@
     ensureRunning: ensureRunning,
     playNote: playNote,
     playSequence: playSequence,
+    sequenceTiming: sequenceTiming,
     stopAll: stopAll,
     setVolume: setVolume,
     getVolume: function () { return volume; },

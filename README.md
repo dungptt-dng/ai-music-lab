@@ -89,7 +89,7 @@ tần suất cho `/api/tro-ly-giao-vien` (xem mục 5 của tài liệu kiến t
 | `js/question-bank.js` | Ngân hàng câu hỏi: 5 dạng, sinh theo quy tắc, mỗi câu đúng 1 đáp án |
 | `js/quiz-activity.js` | Hoạt động 3: Trắc nghiệm, kết quả theo dạng câu hỏi |
 | `js/drag-activity.js` | Hoạt động 4: Kéo thả nốt; đổi điểm thả thành vị trí trên khuông, phản hồi cao hơn/thấp hơn |
-| `js/melody-activity.js` | Hoạt động 5: Phòng sáng tạo giai điệu; phát, lưu/mở file JSON, lưu ảnh PNG |
+| `js/melody-activity.js` | Hoạt động 5: Phòng sáng tạo giai điệu – số chỉ nhịp, hình nốt, cao độ; chia ô nhịp và **kiểm tra nhịp** (có chú thích); phát đúng trường độ; hoàn tác; lưu/mở JSON, ảnh PNG |
 | `js/report.js` | Hoạt động 6: Báo cáo (phiên này / tích lũy), **cách tính** (có chú thích), xuất CSV/JSON, in |
 | `js/practice-advisor.js` | Gợi ý luyện tập tiếp theo trong Báo cáo – **5 quy tắc cố định, không dùng AI** (có chú thích) |
 | `js/teacher-assistant.js` | Trang Trợ lý giáo viên: form, gọi máy chủ của trường, hiển thị kết quả đã kiểm tra, tải file |
@@ -127,8 +127,10 @@ Khóa Sol trên khuông là đường viền nguyên bản của glyph gClef (U+
 | Kết quả lượt trắc nghiệm: đúng/sai/tỷ lệ, theo dạng câu hỏi, xem lại câu sai | ✅ Đã làm, đã kiểm thử |
 | Kéo thả nốt vào khuông (chuột, ngón tay, hoặc chạm – chạm), phản hồi cao hơn/thấp hơn, gợi ý sau 2 lần sai | ✅ Đã làm, đã kiểm thử |
 | Kéo thả: gỡ nốt vừa đặt, xóa bài, thống kê đúng lần đầu / số lần sai | ✅ Đã làm, đã kiểm thử |
-| Phòng sáng tạo: soạn tối đa 16 nốt, đổi thứ tự, xóa, 3 mẫu khởi đầu, 3 tốc độ phát | ✅ Đã làm, đã kiểm thử |
-| Phòng sáng tạo: đặt tên, ghi ý tưởng; lưu/mở file JSON, lưu ảnh PNG | ✅ Đã làm, đã kiểm thử |
+| Phòng sáng tạo (theo mẫu giao diện): chọn số chỉ nhịp 2/4, 3/4, 4/4; chọn nốt đen / trắng / tròn; chọn cao độ; "Thêm nốt" hoặc chạm vào khuông | ✅ Đã làm, đã kiểm thử |
+| Phòng sáng tạo: khuông có khóa Sol, số chỉ nhịp, vạch nhịp, vạch kết (glyph Bravura); "Kiểm tra nhịp" báo từng ô đủ / thiếu / thừa phách | ✅ Đã làm, đã kiểm thử |
+| Phòng sáng tạo: phát đúng trường độ (trắng = 2, tròn = 4 phách), nút Dừng, Hoàn tác, sửa nốt đang chọn, tối đa 16 nốt, 3 mẫu, 3 tốc độ | ✅ Đã làm, đã kiểm thử |
+| Phòng sáng tạo: đặt tên, ghi ý tưởng; lưu/mở file JSON (mở được cả file cũ), tải xuống bản nhạc PNG | ✅ Đã làm, đã kiểm thử |
 | Báo cáo tổng quan: số câu, đúng, sai, tỷ lệ, thời điểm, hoạt động đã tham gia, số lần làm lại | ✅ Đã làm, đã kiểm thử |
 | Báo cáo chi tiết theo hoạt động (theo chế độ/dạng câu, danh sách câu sai) và theo từng nốt | ✅ Đã làm, đã kiểm thử |
 | Nốt hay nhầm – chỉ kết luận khi có từ 2 câu sai với cùng một nốt, ít hơn thì ghi "chưa đủ dữ liệu" | ✅ Đã làm, đã kiểm thử |
@@ -145,7 +147,7 @@ Khóa Sol trên khuông là đường viền nguyên bản của glyph gClef (U+
 
 ## 4. Kết quả kiểm thử tự động (28/10/2026, Chromium và Microsoft Edge)
 
-**163/163 phép kiểm thử đạt** (155 phép của Giai đoạn 1–6 và 8 phép cho giao diện vui). Với cả 8 nốt,
+**171/171 phép kiểm thử đạt** (155 phép của Giai đoạn 1–6, 8 phép cho giao diện vui, 8 phép thêm cho Phòng sáng tạo mới). Với cả 8 nốt,
 trang kiểm thử đối chiếu với bảng chuẩn trong LENH.docx:
 
 - tên tiếng Việt, ký hiệu quốc tế;
@@ -168,8 +170,13 @@ Các nhóm kiểm thử khác:
   trả lời ở Tìm nốt rồi mở Báo cáo thì số liệu cập nhật ngay.
 - Kéo thả (8): điểm thả được hút vào dòng/khe gần nhất, thả ra ngoài không tính, cách chạm – chạm,
   gợi ý sau 2 lần sai, gỡ/xóa, thống kê khi hoàn thành, màn hình hẹp chia 2 dòng khuông, không cuộn trang khi kéo.
-- Phòng sáng tạo (9): thêm nốt và xuống dòng sau 8 nốt, giới hạn 16 nốt, đổi thứ tự/xóa, phát đúng thứ tự và tốc độ,
-  làm mới cần bấm hai lần, file JSON không có trường họ tên, mở lại file và từ chối 5 loại file hỏng, ảnh PNG đọc lại được.
+- Phòng sáng tạo (17): chọn cao độ rồi "Thêm nốt", xuống dòng khuông không cắt đôi ô nhịp (8 nốt/dòng, điện thoại 4 nốt/dòng),
+  giới hạn 16 nốt, đổi thứ tự/xóa, chạm vào khuông thêm đúng cao độ được chạm; phát đúng thứ tự và **đúng trường độ**
+  (nốt trắng vang 2 phách, nốt tròn 4 phách), nút Dừng; xóa toàn bộ cần bấm hai lần, Hoàn tác từng bước;
+  chia ô nhịp đủ / thiếu / thừa (7 trường hợp); số chỉ nhịp 2/4, 3/4, 4/4 bằng glyph Bravura đúng dòng, không đè khóa Sol;
+  nốt đen / trắng / tròn đúng hình (đầu rỗng không bị tô, nốt tròn không thân) và đúng cao độ; vạch nhịp nằm giữa hai nốt,
+  đi từ dòng 5 xuống dòng 1, xếp lại khi đổi nhịp; "Kiểm tra nhịp" báo từng ô, tô đỏ nốt làm thừa phách, chúc mừng khi đủ hết;
+  file JSON có nhịp và hình nốt, không có trường họ tên, từ chối 8 loại file hỏng, mở được file cũ; ảnh PNG đọc lại được.
 
 - Báo cáo (14): các hoạt động ghi nhật ký đúng; số liệu tổng hợp khớp với một phiên **dựng tay có kết quả biết trước**;
   màn hình tổng quan/theo hoạt động/theo nốt; "chưa đủ dữ liệu" khi mới sai 1 câu; CSV đọc lại được (BOM, 9 cột,
@@ -223,6 +230,8 @@ việc trình duyệt thật lưu file vào máy và bản in thật cần kiể
 - [ ] Phòng sáng tạo: bấm "Lưu file" và "Lưu ảnh" trên Chrome/Edge thật – file xuất hiện trong thư mục Tải về và mở lại được.
 - [ ] Phòng sáng tạo trên iPhone/iPad: lưu ảnh có thể mở trang xem ảnh thay vì tải về – kiểm tra cách học sinh lưu.
 - [ ] Nghe giai điệu ở 3 tốc độ Chậm / Vừa / Nhanh: tốc độ có phù hợp với học sinh không.
+- [ ] Phòng sáng tạo – nghe bằng tai: nốt trắng, nốt tròn vang đủ dài, ngân đều (âm tổng hợp tắt dần như đàn).
+- [ ] Phòng sáng tạo: giáo viên xem cách chia ô nhịp tự động (nốt làm vượt phách vẫn nằm trong ô đó và tô đỏ) có dễ hiểu với học sinh không.
 - [ ] Báo cáo: bấm "Xuất CSV" và mở bằng Excel trên máy cài tiếng Việt. Nếu Excel dồn tất cả vào một cột
   (do máy dùng dấu chấm phẩy làm dấu phân cách), mở bằng Data → From Text/CSV, hoặc mở bằng Google Sheets.
 - [ ] Báo cáo: bấm "Xuất JSON" – file tải về mở được; bấm "In báo cáo" – bản xem trước in chỉ có phần báo cáo, dễ đọc.

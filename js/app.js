@@ -60,8 +60,7 @@
       return playNote.apply(engine, arguments);
     };
     engine.playSequence = function (frequencies, options) {
-      var o = options || {};
-      global.SoundFx.duck((frequencies.length - 1) * (o.gap || 0.6) + (o.noteDuration || 0.9));
+      global.SoundFx.duck(engine.sequenceTiming(frequencies.length, options || {}).total);
       return playSequence.apply(engine, arguments);
     };
   }

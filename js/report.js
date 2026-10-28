@@ -33,7 +33,8 @@
     play: 'lần phát giai điệu',
     'save-json': 'lần lưu file giai điệu',
     'save-image': 'lần lưu ảnh giai điệu',
-    open: 'lần mở file giai điệu'
+    open: 'lần mở file giai điệu',
+    'check-beats': 'lần kiểm tra nhịp'
   };
 
   function activityName(key) {

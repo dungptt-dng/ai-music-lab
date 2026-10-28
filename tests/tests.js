@@ -1312,15 +1312,30 @@
   // =====================================================================
   function melody(extra) {
     var saved = [];
-    var options = { download: function (name, blob) { saved.push({ name: name, blob: blob }); },
+    var options = { notesPerRow: 8, download: function (name, blob) { saved.push({ name: name, blob: blob }); },
       now: function () { return new Date('2026-10-28T08:30:00Z'); } };
     for (var k in extra || {}) options[k] = extra[k];
     var ctx = mountFresh(81, MelodyActivity, options);
     ctx.saved = saved;
     return ctx;
   }
-  function addMelodyNotes(ctx, ids) {
-    ids.forEach(function (id) { click(ctx.host, '[data-add="' + id + '"]'); });
+  // Thêm nốt như học sinh: (chọn hình nốt) → chọn cao độ → bấm "Thêm nốt". beats mặc định: nốt đen.
+  function addMelodyNotes(ctx, ids, beats) {
+    ids.forEach(function (id, i) {
+      if (beats) click(ctx.host, '[data-beats="' + (Array.isArray(beats) ? beats[i] : beats) + '"]');
+      click(ctx.host, '[data-pitch="' + id + '"]');
+      click(ctx.host, '[data-ref="addButton"]');
+    });
+  }
+  function melodyIds(ctx) {
+    return ctx.app.getState().notes.map(function (n) { return n.id; }).join();
+  }
+  function melodyBeats(ctx) {
+    return ctx.app.getState().notes.map(function (n) { return n.beats; }).join();
+  }
+  function translateOf(node) {
+    var m = /translate\(([-\d.]+) ([-\d.]+)\)/.exec(node.getAttribute('transform'));
+    return { x: Number(m[1]), y: Number(m[2]) };
   }
   function sequenceText(ctx) {
     return Array.prototype.map.call(ctx.host.querySelectorAll('.sequence-chip'), function (c) { return c.textContent; }).join(' ');
@@ -1334,25 +1349,30 @@
   }
 
   var MELODY_TESTS = [
-    ['Thêm nốt: hiện trên khuông và bằng tên nốt, phát âm; quá 8 nốt thì xuống dòng khuông thứ hai', function () {
+    ['Thêm nốt: chọn cao độ (nghe thử) rồi bấm “Thêm nốt”; hiện trên khuông và bằng tên nốt; xuống dòng khuông thứ hai không cắt ô nhịp', function () {
       var ctx = melody();
+      assert(ctx.host.querySelector('[data-ref="addButton"]').disabled, '“Thêm nốt” mở khi chưa chọn cao độ');
       addMelodyNotes(ctx, ['C4', 'E4', 'G4', 'C5', 'B4', 'A4', 'G4', 'F4', 'E4']);
-      assert(sequenceText(ctx) === '1Đô₄ 2Mi₄ 3Sol₄ 4Đô₅ 5Si₄ 6La₄ 7Sol₄ 8Pha₄ 9Mi₄', 'Chuỗi tên nốt: ' + sequenceText(ctx));
+      assert(sequenceText(ctx) === '1Đô₄đen 2Mi₄đen 3Sol₄đen 4Đô₅đen 5Si₄đen 6La₄đen 7Sol₄đen 8Pha₄đen 9Mi₄đen', 'Chuỗi tên nốt: ' + sequenceText(ctx));
       var rows = ctx.host.querySelectorAll('.melody-staff .staff-svg');
       assert(rows.length === 2, 'Có ' + rows.length + ' dòng khuông');
       var ninth = ctx.app.noteNode(8);
       assert(ninth && ninth.ownerSVGElement === rows[1] && ninth.getAttribute('data-note') === 'E4', 'Nốt thứ 9 không ở dòng 2');
       var ys = lineYs(rows[0]);
       assert(Number(ctx.app.noteNode(3).querySelector('.note-head').getAttribute('cy')) === (ys[3] + ys[4]) / 2, 'Đô₅ không ở khe 3');
-      assert(ctx.audio.notes.length === 9 && near(ctx.audio.notes[3], 523.25, 0.01), 'Không phát âm khi thêm nốt');
-      return '9 nốt, 2 dòng khuông, mỗi nốt đúng vị trí';
+      // Mỗi nốt phát 2 lần: lúc chọn cao độ và lúc thêm vào giai điệu.
+      assert(ctx.audio.notes.length === 18 && near(ctx.audio.notes[6], 523.25, 0.01) && near(ctx.audio.notes[7], 523.25, 0.01), 'Không phát âm khi chọn / thêm nốt');
+      return '9 nốt, 2 dòng khuông (dòng 1: 4 ô nhịp 2/4), mỗi nốt đúng vị trí';
     }],
-    ['Tối đa ' + MelodyActivity.MAX_NOTES + ' nốt: mẫu khởi đầu chỉ thêm phần còn chỗ, nút thêm bị khoá', function () {
+    ['Tối đa ' + MelodyActivity.MAX_NOTES + ' nốt: mẫu khởi đầu chỉ thêm phần còn chỗ, “Thêm nốt” bị khoá', function () {
       var ctx = melody();
       for (var i = 0; i < 4; i++) click(ctx.host, '[data-pattern="0"]');   // 4 × 5 = 20 nốt
       assert(ctx.app.getState().notes.length === 16, 'Có ' + ctx.app.getState().notes.length + ' nốt');
-      assert(ctx.host.querySelector('[data-add="C4"]').disabled, 'Nút thêm nốt chưa bị khoá');
       assert(ctx.host.querySelector('[data-ref="message"]').textContent.indexOf('tối đa 16') !== -1, 'Thiếu lời nhắc giới hạn');
+      click(ctx.host, '[data-pitch="C4"]');
+      assert(ctx.host.querySelector('[data-ref="addButton"]').disabled, 'Nút “Thêm nốt” chưa bị khoá');
+      assert(ctx.host.querySelector('[data-pattern="0"]').disabled, 'Nút mẫu chưa bị khoá');
+      assert(!ctx.host.querySelector('.add-slot'), 'Vẫn hiện ô “+” để thêm nốt');
       return '20 → giữ 16 nốt, khoá nút thêm';
     }],
     ['Đổi thứ tự và xóa nốt; nút bị khoá ở hai đầu', function () {
@@ -1361,39 +1381,47 @@
       click(ctx.host, '[data-index="0"]');
       assert(ctx.host.querySelector('[data-ref="moveLeft"]').disabled, 'Nốt đầu vẫn lùi được');
       click(ctx.host, '[data-ref="moveRight"]');
-      assert(ctx.app.getState().notes.join() === 'D4,C4,E4', 'Tiến: ' + ctx.app.getState().notes.join());
+      assert(melodyIds(ctx) === 'D4,C4,E4', 'Tiến: ' + melodyIds(ctx));
       assert(ctx.app.getState().selected === 1, 'Nốt đang chọn không đi theo');
       click(ctx.host, '[data-ref="moveRight"]');
       assert(ctx.host.querySelector('[data-ref="moveRight"]').disabled, 'Nốt cuối vẫn tiến được');
       click(ctx.host, '[data-ref="moveLeft"]');
       click(ctx.host, '[data-ref="removeNote"]');
-      assert(ctx.app.getState().notes.join() === 'D4,E4', 'Xóa: ' + ctx.app.getState().notes.join());
+      assert(melodyIds(ctx) === 'D4,E4', 'Xóa: ' + melodyIds(ctx));
       assert(ctx.host.querySelector('[data-ref="removeNote"]').disabled, 'Nút xóa vẫn mở khi chưa chọn');
       return 'Đô Rê Mi → Rê Đô Mi → Rê Mi Đô → Rê Đô Mi → Rê Mi';
     }],
-    ['Phát giai điệu: đúng thứ tự, đúng tốc độ, tô sáng nốt đang phát, Dừng được', function () {
+    ['Phát giai điệu: đúng thứ tự, mỗi nốt vang đúng số phách (đen 1, trắng 2, tròn 4), tô sáng nốt đang phát; nút Dừng', function () {
       var ctx = melody();
-      addMelodyNotes(ctx, ['G4', 'E4', 'C4']);
+      addMelodyNotes(ctx, ['G4', 'E4', 'C4'], [1, 2, 4]);
       var select = ctx.host.querySelector('[data-ref="tempoSelect"]');
       select.value = '72';
       select.dispatchEvent(new Event('change'));
-      click(ctx.host, '[data-ref="playButton"]');
+      var play = ctx.host.querySelector('[data-ref="playButton"]'), stop = ctx.host.querySelector('[data-ref="stopButton"]');
+      assert(stop.disabled, 'Nút Dừng mở khi chưa phát');
+      play.click();
       var seq = lastSequence(ctx.audio);
+      var beat = 60 / 72;
       assert(seq.frequencies.map(function (f) { return f.toFixed(2); }).join() === '392.00,329.63,261.63', 'Phát sai: ' + seq.frequencies);
-      assert(near(seq.options.gap, 60 / 72, 0.0001), 'Khoảng cách nốt ' + seq.options.gap + ' s, đúng là ' + (60 / 72));
+      assert(seq.options.gaps.length === 3 && near(seq.options.gaps[0], beat, 1e-9) && near(seq.options.gaps[1], 2 * beat, 1e-9) &&
+        near(seq.options.gaps[2], 4 * beat, 1e-9), 'Khoảng cách nốt: ' + seq.options.gaps);
+      assert(seq.options.noteDurations[2] > seq.options.noteDurations[1] && seq.options.noteDurations[1] > seq.options.noteDurations[0], 'Nốt dài không vang lâu hơn');
+      var timing = AudioEngine.sequenceTiming(3, seq.options);
+      assert(near(timing.starts[2], 3 * beat, 1e-9), 'Nốt tròn bắt đầu lúc ' + timing.starts[2] + ' s');
       seq.options.onStep(1);
       assert(ctx.app.noteNode(1).classList.contains('is-playing'), 'Nốt đang phát không được tô trên khuông');
       assert(ctx.host.querySelector('[data-index="1"]').classList.contains('is-playing'), 'Nốt đang phát không được tô trong chuỗi');
-      assert(ctx.host.querySelector('[data-ref="playButton"]').textContent.indexOf('Dừng') !== -1, 'Nút không đổi thành Dừng');
+      assert(play.disabled && !stop.disabled, 'Đang phát mà nút Phát / Dừng chưa đổi trạng thái');
       var stops = ctx.audio.stopCount;
-      click(ctx.host, '[data-ref="playButton"]');
-      assert(ctx.audio.stopCount > stops && !ctx.app.getState().playing, 'Không dừng được');
-      click(ctx.host, '[data-ref="playButton"]');
+      stop.click();
+      assert(ctx.audio.stopCount > stops && !ctx.app.getState().playing && !play.disabled, 'Không dừng được');
+      play.click();
       lastSequence(ctx.audio).options.onDone();
-      assert(!ctx.app.getState().playing && ctx.host.querySelector('[data-ref="playButton"]').textContent.indexOf('Phát') !== -1, 'Phát xong chưa trở lại');
-      return 'Sol Mi Đô, mỗi nốt ' + (60 / 72).toFixed(2).replace('.', ',') + ' s (Chậm), dừng và phát lại được';
+      assert(!ctx.app.getState().playing && !play.disabled && stop.disabled, 'Phát xong chưa trở lại');
+      return 'Sol (đen) bắt đầu 0 s, Mi (trắng) ' + beat.toFixed(2).replace('.', ',') + ' s, Đô (tròn) ' +
+        (3 * beat).toFixed(2).replace('.', ',') + ' s ở tốc độ Chậm; dừng và phát lại được';
     }],
-    ['Làm mới cần bấm hai lần để tránh xóa nhầm', function () {
+    ['Xóa toàn bộ giai điệu cần bấm hai lần; “Hoàn tác” lấy lại được', function () {
       var ctx = melody();
       addMelodyNotes(ctx, ['C4', 'D4']);
       ctx.host.querySelector('[data-ref="titleInput"]').value = 'Thử';
@@ -1401,11 +1429,57 @@
       assert(ctx.app.getState().notes.length === 2, 'Bấm một lần đã xóa');
       click(ctx.host, '[data-ref="clearButton"]');
       assert(ctx.app.getState().notes.length === 0 && ctx.host.querySelector('[data-ref="titleInput"]').value === '', 'Bấm hai lần chưa xóa');
-      return 'lần 1 hỏi lại, lần 2 xóa';
+      click(ctx.host, '[data-ref="undoButton"]');
+      assert(melodyIds(ctx) === 'C4,D4' && ctx.host.querySelector('[data-ref="titleInput"]').value === 'Thử', 'Hoàn tác không lấy lại giai điệu');
+      return 'lần 1 hỏi lại, lần 2 xóa, Hoàn tác lấy lại 2 nốt và tên';
     }],
-    ['Lưu JSON: chuỗi nốt, tên nốt, tên giai điệu, ý tưởng, tốc độ; tên file không dấu; không có họ tên', function () {
+    ['Hoàn tác từng bước: thêm nốt, đổi hình nốt / cao độ của nốt đang chọn, đổi số chỉ nhịp', function () {
       var ctx = melody();
+      var undoButton = ctx.host.querySelector('[data-ref="undoButton"]');
+      assert(undoButton.disabled, 'Hoàn tác mở khi chưa làm gì');
       addMelodyNotes(ctx, ['C4', 'E4', 'G4']);
+      click(ctx.host, '[data-index="1"]');
+      click(ctx.host, '[data-beats="2"]');                    // nốt 2 → nốt trắng
+      click(ctx.host, '[data-pitch="F4"]');                   // nốt 2 → Pha
+      assert(melodyIds(ctx) === 'C4,F4,G4' && melodyBeats(ctx) === '1,2,1', 'Sửa nốt đang chọn: ' + melodyIds(ctx) + ' / ' + melodyBeats(ctx));
+      assert(ctx.app.noteNode(1).getAttribute('data-beats') === '2', 'Khuông chưa vẽ lại nốt trắng');
+      click(ctx.host, '[data-meter="3"]');
+      assert(ctx.app.getState().meter === 3, 'Không đổi được nhịp 3/4');
+      var steps = [];
+      [['2', 'C4,F4,G4', '1,2,1'], ['2', 'C4,E4,G4', '1,2,1'], ['2', 'C4,E4,G4', '1,1,1'], ['2', 'C4,E4', '1,1']].forEach(function (want) {
+        click(ctx.host, '[data-ref="undoButton"]');
+        steps.push(ctx.app.getState().meter + '/4 ' + melodyIds(ctx));
+        assert(String(ctx.app.getState().meter) === want[0] && melodyIds(ctx) === want[1] && melodyBeats(ctx) === want[2],
+          'Hoàn tác sai ở bước ' + steps.length + ': ' + steps[steps.length - 1] + ' / ' + melodyBeats(ctx));
+      });
+      return steps.join(' → ');
+    }],
+    ['Chạm vào chỗ trống trên khuông: thêm nốt đúng cao độ được chạm, với hình nốt đang chọn', function () {
+      var ctx = melody();
+      ctx.host.style.width = '900px';
+      click(ctx.host, '[data-beats="2"]');
+      var staff = ctx.app.staffRows()[0];
+      var added = [];
+      [['A4', 3], ['C4', -2], ['D4', -1]].forEach(function (t, i) {
+        var p = staff.staffToClient(i, t[1]);
+        // Lệch 0,3 nửa khoảng dòng vẫn được "hút" vào đúng dòng / khe.
+        var q = staff.staffToClient(i, t[1] + 1);
+        staff = ctx.app.staffRows()[0];
+        staff.svg.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: p.clientX, clientY: p.clientY + (q.clientY - p.clientY) * 0.3 }));
+        staff = ctx.app.staffRows()[0];
+        added.push(MusicNotes.findNote(t[0]).label);
+      });
+      assert(melodyIds(ctx) === 'A4,C4,D4' && melodyBeats(ctx) === '2,2,2', 'Chạm thêm: ' + melodyIds(ctx) + ' / ' + melodyBeats(ctx));
+      var p2 = staff.staffToClient(3, 10);                     // cao hơn Đô₅: ngoài 8 nốt đã học
+      staff.svg.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: p2.clientX, clientY: p2.clientY }));
+      assert(ctx.app.getState().notes.length === 3, 'Chạm ngoài tầm Đô₄–Đô₅ vẫn thêm nốt');
+      assert(ctx.host.querySelector('[data-ref="message"]').textContent.indexOf('Đô₄') !== -1, 'Thiếu lời nhắc khi chạm ngoài tầm');
+      return added.join(', ') + ' (nốt trắng); chạm cao hơn Đô₅ thì nhắc lại';
+    }],
+    ['Lưu JSON: chuỗi nốt, hình nốt, số chỉ nhịp, tên nốt, tên giai điệu, ý tưởng, tốc độ; tên file không dấu; không có họ tên', function () {
+      var ctx = melody();
+      click(ctx.host, '[data-meter="4"]');
+      addMelodyNotes(ctx, ['C4', 'E4', 'G4'], [1, 1, 2]);
       ctx.host.querySelector('[data-ref="titleInput"]').value = 'Buổi sáng ở sân trường';
       ctx.host.querySelector('[data-ref="ideaInput"]').value = 'Đi lên như mặt trời mọc.';
       click(ctx.host, '[data-ref="saveJson"]');
@@ -1413,18 +1487,20 @@
       assert(ctx.saved[0].name === 'buoi-sang-o-san-truong.json', 'Tên file: ' + ctx.saved[0].name);
       return readBlob(ctx.saved[0].blob).then(function (text) {
         var data = JSON.parse(text);
-        assert(data.type === 'ai-music-lab/giai-dieu' && data.version === 1, 'Sai loại file');
+        assert(data.type === 'ai-music-lab/giai-dieu' && data.version === 2, 'Sai loại file');
         assert(data.notes.join() === 'C4,E4,G4' && data.noteNames.join() === 'Đô₄,Mi₄,Sol₄', 'Sai chuỗi nốt');
+        assert(data.durations.join() === '1,1,2' && data.meter === 4, 'Sai hình nốt hoặc số chỉ nhịp');
         assert(data.title === 'Buổi sáng ở sân trường' && data.idea === 'Đi lên như mặt trời mọc.', 'Thiếu tên hoặc ý tưởng');
         assert(data.tempo === 100 && data.savedAt === '2026-10-28T08:30:00.000Z', 'Sai tốc độ hoặc thời điểm');
         var keys = Object.keys(data).sort().join();
-        assert(keys === 'app,idea,noteNames,notes,savedAt,tempo,title,type,version', 'File có trường lạ: ' + keys);
-        return 'buoi-sang-o-san-truong.json · 3 nốt · không có trường họ tên';
+        assert(keys === 'app,durations,idea,meter,noteNames,notes,savedAt,tempo,title,type,version', 'File có trường lạ: ' + keys);
+        return 'buoi-sang-o-san-truong.json · nhịp 4/4 · 3 nốt (đen, đen, trắng) · không có trường họ tên';
       });
     }],
     ['Mở lại file đã lưu khôi phục đúng giai điệu; file hỏng bị từ chối và không làm mất giai điệu đang có', function () {
       var a = melody();
-      addMelodyNotes(a, ['A4', 'B4', 'C5']);
+      click(a.host, '[data-meter="3"]');
+      addMelodyNotes(a, ['A4', 'B4', 'C5'], [2, 1, 4]);
       a.host.querySelector('[data-ref="titleInput"]').value = 'Lên cao';
       var text = JSON.stringify(a.app.melodyData());
       var b = melody();
@@ -1434,17 +1510,25 @@
         JSON.stringify({ type: 'khac', notes: ['C4'] }),
         JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: ['C4', 'H9'] }),
         JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: new Array(17).fill('C4') }),
-        JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: [] })
+        JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: [] }),
+        JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: ['C4', 'D4'], durations: [1, 3] }),
+        JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: ['C4', 'D4'], durations: [1] }),
+        JSON.stringify({ type: 'ai-music-lab/giai-dieu', notes: ['C4'], durations: [1], meter: 6 })
       ];
       bad.forEach(function (t) {
-        assert(b.app.loadMelodyText(t) === false, 'Nhận file hỏng: ' + t.slice(0, 40));
-        assert(b.app.getState().notes.join() === 'D4', 'File hỏng làm mất giai điệu đang có');
+        assert(b.app.loadMelodyText(t) === false, 'Nhận file hỏng: ' + t.slice(0, 60));
+        assert(melodyIds(b) === 'D4', 'File hỏng làm mất giai điệu đang có');
       });
       assert(b.host.querySelector('[data-ref="message"]').textContent.indexOf('Không mở được file') !== -1, 'Thiếu thông báo lỗi');
       assert(b.app.loadMelodyText(text) === true, 'Không mở được file hợp lệ');
-      assert(b.app.getState().notes.join() === 'A4,B4,C5' && b.host.querySelector('[data-ref="titleInput"]').value === 'Lên cao', 'Khôi phục sai');
+      assert(melodyIds(b) === 'A4,B4,C5' && melodyBeats(b) === '2,1,4' && b.app.getState().meter === 3, 'Khôi phục sai: ' + melodyIds(b) + ' / ' + melodyBeats(b));
+      assert(b.host.querySelector('[data-ref="titleInput"]').value === 'Lên cao', 'Không khôi phục tên');
+      assert(b.host.querySelector('.time-signature').getAttribute('data-beats') === '3', 'Khuông chưa vẽ lại số chỉ nhịp 3/4');
       assert(b.host.querySelectorAll('.sequence-chip').length === 3, 'Chuỗi nốt chưa vẽ lại');
-      return '5 file hỏng bị từ chối; file hợp lệ khôi phục 3 nốt và tên';
+      // File phiên bản 1 (trước khi có hình nốt) vẫn mở được: toàn nốt đen, nhịp 4/4.
+      var old = JSON.stringify({ type: 'ai-music-lab/giai-dieu', version: 1, notes: ['E4', 'G4'], tempo: 72 });
+      assert(b.app.loadMelodyText(old) === true && melodyBeats(b) === '1,1' && b.app.getState().meter === 4, 'Không mở được file phiên bản 1');
+      return '8 file hỏng bị từ chối; file hợp lệ khôi phục 3/4, 3 nốt (trắng, đen, tròn) và tên; file cũ mở thành nốt đen 4/4';
     }],
     ['Lưu ảnh PNG: tạo được ảnh thật, đọc lại được', function () {
       var ctx = melody();
@@ -1460,13 +1544,146 @@
         });
       });
     }],
-    ['Giai điệu trống: không cho phát hay lưu; ghi rõ không dùng AI', function () {
+    ['Giai điệu trống: không cho phát, kiểm tra nhịp hay lưu; ghi rõ không dùng AI', function () {
       var ctx = melody();
-      ['playButton', 'saveJson', 'saveImage'].forEach(function (ref) {
+      ['playButton', 'stopButton', 'checkButton', 'saveJson', 'saveImage', 'removeNote', 'undoButton', 'clearButton'].forEach(function (ref) {
         assert(ctx.host.querySelector('[data-ref="' + ref + '"]').disabled, ref + ' không bị khoá');
       });
       assert(ctx.host.querySelector('.honest-note').textContent.indexOf('không dùng AI') !== -1, 'Thiếu ghi chú không dùng AI');
-      return 'nút Phát / Lưu bị khoá khi chưa có nốt';
+      return '8 nút bị khoá khi chưa có nốt';
+    }],
+    ['Chia ô nhịp theo số phách: đủ / còn thiếu / vượt quá (nốt đen = 1 phách)', function () {
+      var cases = [
+        [[1, 1, 1, 1], 2, 'full2 full2'],
+        [[1, 2], 3, 'full3'],
+        [[1, 1, 2], 3, 'over4'],
+        [[2, 1], 2, 'full2 short1'],
+        [[4], 2, 'over4'],
+        [[1, 2, 1, 4], 4, 'full4 full4'],
+        [[1], 3, 'short1']
+      ];
+      cases.forEach(function (c) {
+        var got = MelodyActivity.splitMeasures(c[0], c[1]).map(function (m) { return m.status + m.beats; }).join(' ');
+        var want = c[2];
+        assert(got === want, c[0].join('+') + ' trong nhịp ' + c[1] + '/4: ' + got + ', đúng là ' + want);
+      });
+      var m = MelodyActivity.splitMeasures([1, 1, 2, 1], 3);
+      assert(m[0].overIndex === 2 && m[0].extra === 1 && m[1].missing === 2, 'Sai nốt vượt / số phách thiếu');
+      return cases.length + ' trường hợp đúng; 1+1+2 trong 3/4 → thừa 1 phách ở nốt thứ 3';
+    }],
+    ['Khuông nhạc: số chỉ nhịp 2/4, 3/4, 4/4 bằng glyph Bravura đúng chỗ, sau khóa Sol; chỉ ở dòng khuông đầu', function () {
+      var ctx = melody();
+      var results = [];
+      [2, 3, 4].forEach(function (meter) {
+        click(ctx.host, '[data-meter="' + meter + '"]');
+        var sig = ctx.host.querySelector('.time-signature');
+        var top = sig.querySelector('[data-digit="top"]'), bottom = sig.querySelector('[data-digit="bottom"]');
+        assert(sig.getAttribute('data-beats') === String(meter), 'Số chỉ nhịp ' + sig.getAttribute('data-beats'));
+        assert(top.getAttribute('data-glyph') === 'timeSig' + meter && bottom.getAttribute('data-glyph') === 'timeSig4', 'Sai glyph số chỉ nhịp');
+        var ys = lineYs(sig.ownerSVGElement);
+        // Mỗi chữ số cao 2 khoảng dòng: số trên giữa dòng 4, số dưới giữa dòng 2.
+        assert(translateOf(top).y === ys[4] && translateOf(bottom).y === ys[2], 'Số chỉ nhịp lệch dòng');
+        var clefRect = sig.ownerSVGElement.querySelector('.treble-clef').getBoundingClientRect();
+        assert(sig.getBoundingClientRect().left > clefRect.right, 'Số chỉ nhịp đè lên khóa Sol');
+        var sigBox = sig.getBBox();
+        assert(near(sigBox.height, 4 * StaffRenderer.LINE_GAP, 1.5), 'Số chỉ nhịp cao ' + sigBox.height.toFixed(1));
+        assert(ctx.host.querySelector('[data-meter="' + meter + '"]').getAttribute('aria-pressed') === 'true', 'Nút nhịp chưa được đánh dấu');
+        results.push(meter + '/4');
+      });
+      addMelodyNotes(ctx, ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'C4']);   // 4/4: 3 ô nhịp, 2 dòng khuông
+      var rows = ctx.host.querySelectorAll('.melody-staff .staff-svg');
+      assert(rows.length === 2 && rows[0].querySelector('.time-signature') && !rows[1].querySelector('.time-signature'), 'Số chỉ nhịp ở sai dòng');
+      var sigRect = rows[0].querySelector('.time-signature').getBoundingClientRect();
+      var headRect = ctx.app.noteNode(0).querySelector('.note-head').getBoundingClientRect();
+      assert(headRect.left > sigRect.right + 4, 'Nốt đầu tiên đè lên số chỉ nhịp');
+      return results.join(', ') + ' · số chỉ nhịp chỉ ở dòng 1, nốt đầu không đè lên';
+    }],
+    ['Khuông nhạc: nốt đen / trắng / tròn vẽ đúng hình (đầu đặc, đầu rỗng có thân, đầu rỗng không thân) và đúng cao độ', function () {
+      var ctx = melody();
+      click(ctx.host, '[data-meter="4"]');
+      addMelodyNotes(ctx, ['E4', 'G4', 'C5', 'C4'], [1, 2, 4, 2]);
+      var ys = lineYs(ctx.host.querySelector('.melody-staff .staff-svg'));
+      function head(i) { return ctx.app.noteNode(i).querySelector('.note-head'); }
+      assert(head(0).tagName === 'ellipse' && ctx.app.noteNode(0).querySelector('.note-stem'), 'Nốt đen sai hình');
+      assert(head(1).getAttribute('data-glyph') === 'noteheadHalf' && ctx.app.noteNode(1).querySelector('.note-stem'), 'Nốt trắng sai hình');
+      assert(head(2).getAttribute('data-glyph') === 'noteheadWhole' && !ctx.app.noteNode(2).querySelector('.note-stem'), 'Nốt tròn sai hình (không được có thân)');
+      assert(Number(head(1).getAttribute('data-cy')) === ys[2], 'Sol₄ (nốt trắng) không nằm trên dòng 2');
+      assert(Number(head(2).getAttribute('data-cy')) === (ys[3] + ys[4]) / 2, 'Đô₅ (nốt tròn) không ở khe 3');
+      assert(ctx.app.noteNode(3).querySelectorAll('.ledger-line').length === 1 && head(3).getAttribute('data-glyph') === 'noteheadHalf', 'Đô₄ nốt trắng thiếu dòng kẻ phụ');
+      // Đầu nốt rỗng: điểm giữa glyph không được tô (dòng kẻ đi qua vẫn thấy).
+      var box = head(1).getBBox();
+      var svg = head(1).ownerSVGElement, pt = svg.createSVGPoint();
+      pt.x = box.x + box.width / 2; pt.y = box.y + box.height / 2;
+      assert(!head(1).isPointInFill(pt), 'Đầu nốt trắng bị tô đặc');
+      assert(head(0).isPointInFill((function () { var b = head(0).getBBox(), p = svg.createSVGPoint(); p.x = b.x + b.width / 2; p.y = b.y + b.height / 2; return p; })()), 'Đầu nốt đen không đặc');
+      return 'đen: elip đặc + thân · trắng: noteheadHalf + thân · tròn: noteheadWhole, không thân';
+    }],
+    ['Khuông nhạc: vạch nhịp sau mỗi ô nhịp đủ phách, vạch kết ở cuối; đổi nhịp thì vạch nhịp xếp lại', function () {
+      var ctx = melody();
+      addMelodyNotes(ctx, ['C4', 'D4', 'E4', 'F4', 'G4']);                       // 2/4: | Đô Rê | Mi Pha | Sol
+      function bars() {
+        return Array.prototype.map.call(ctx.host.querySelectorAll('.melody-staff .barline[data-after]'), function (b) { return b.getAttribute('data-after'); }).join();
+      }
+      assert(bars() === '1,3', '2/4 – vạch nhịp sau cột: ' + bars());
+      assert(ctx.host.querySelectorAll('.barline-final').length === 1, 'Thiếu vạch kết');
+      var bar = ctx.host.querySelector('.barline[data-after="1"]'), staff = ctx.app.staffRows()[0];
+      var barX = Number(bar.getAttribute('x')) + Number(bar.getAttribute('width')) / 2;
+      assert(near(barX, (staff.columnX(1) + staff.columnX(2)) / 2, 0.01), 'Vạch nhịp không nằm giữa hai nốt');
+      var ys = lineYs(bar.ownerSVGElement);
+      assert(Number(bar.getAttribute('y')) === ys[5] && Number(bar.getAttribute('y')) + Number(bar.getAttribute('height')) === ys[1], 'Vạch nhịp không đi từ dòng 5 xuống dòng 1');
+      click(ctx.host, '[data-meter="3"]');
+      var three = bars();
+      click(ctx.host, '[data-meter="4"]');
+      var four = bars();
+      assert(three === '2' && four === '3', 'Đổi nhịp: 3/4 → ' + three + ', 4/4 → ' + four);
+      return '2/4: sau nốt 2 và 4 · 3/4: sau nốt 3 · 4/4: sau nốt 4 · có vạch kết';
+    }],
+    ['Màn hình điện thoại (4 nốt mỗi dòng): xuống dòng khuông giữa hai ô nhịp, không cắt đôi ô nhịp', function () {
+      var ctx = melody({ notesPerRow: 4 });
+      click(ctx.host, '[data-meter="3"]');
+      // | 3 nốt | 3 nốt | 1 nốt: ô 1 + ô 2 = 6 nốt > 4 nên ô 2 xuống dòng; ô 3 (1 nốt) vừa chỗ trống cạnh ô 2.
+      addMelodyNotes(ctx, ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4']);
+      var rows = ctx.host.querySelectorAll('.melody-staff .staff-svg');
+      var perRow = Array.prototype.map.call(rows, function (svg) { return svg.querySelectorAll('.note').length; }).join();
+      assert(perRow === '3,4', 'Số nốt mỗi dòng: ' + perRow);
+      assert(ctx.app.noteNode(2).ownerSVGElement === rows[0] && ctx.app.noteNode(3).ownerSVGElement === rows[1], 'Ô nhịp bị cắt đôi');
+      assert(rows[0].querySelectorAll('.barline[data-after="2"]').length === 1 && rows[1].querySelectorAll('.barline[data-after="2"]').length === 1,
+        'Thiếu vạch nhịp sau ô nhịp 1 hoặc 2');
+      return '3/4, 7 nốt đen → 2 dòng khuông: | 3 nốt | rồi | 3 nốt | 1 nốt';
+    }],
+    ['Kiểm tra nhịp: báo từng ô nhịp đủ / còn thiếu / vượt quá, tô đỏ nốt làm thừa phách; đủ hết thì chúc mừng', function () {
+      var ctx = melody();
+      var celebrated = [];
+      function onCelebrate(e) { celebrated.push(e.detail.activity); }
+      window.addEventListener(AppShared.CELEBRATE_EVENT, onCelebrate);
+      try {
+        click(ctx.host, '[data-meter="3"]');
+        addMelodyNotes(ctx, ['E4', 'G4', 'F4', 'A4', 'G4', 'E4', 'C4'], [1, 2, 1, 1, 2, 1, 1]);   // | 3 | 4 (thừa) | 2 (thiếu)
+        assert(ctx.host.querySelector('[data-ref="beatReport"]').hidden, 'Chưa bấm mà đã hiện kết quả');
+        click(ctx.host, '[data-ref="checkButton"]');
+        var items = Array.prototype.map.call(ctx.host.querySelectorAll('[data-ref="beatReport"] li'), function (li) { return li.textContent; });
+        assert(items.join(' | ') === 'Ô nhịp 1: Đủ 3 phách ✓ | Ô nhịp 2: Vượt quá số phách (thừa 1) | Ô nhịp 3: Còn thiếu 1 phách', 'Kết quả: ' + items.join(' | '));
+        var message = ctx.host.querySelector('[data-ref="message"]').textContent;
+        assert(message.indexOf('Ô nhịp 2 thừa 1 phách') !== -1 && message.indexOf('Ô nhịp 3 còn thiếu 1 phách (thêm 1 nốt đen)') !== -1, 'Lời nhắc: ' + message);
+        assert(ctx.app.noteNode(4).classList.contains('is-overflow') && ctx.host.querySelectorAll('.is-overflow').length === 1, 'Không tô nốt làm thừa phách');
+        var tags = Array.prototype.map.call(ctx.host.querySelectorAll('.measure-tag'), function (t) { return t.getAttribute('class').replace('measure-tag is-', ''); });
+        assert(tags.join() === 'full,over,short', 'Nhãn ô nhịp trên khuông: ' + tags.join());
+        assert(celebrated.length === 0, 'Chúc mừng khi nhịp còn sai');
+        // Sửa: nốt thứ 5 (Sol₄ trắng) → nốt đen, thêm một nốt đen → cả 3 ô nhịp đủ 3 phách.
+        click(ctx.host, '[data-index="4"]');
+        click(ctx.host, '[data-beats="1"]');
+        click(ctx.host, '[data-index="4"]');
+        addMelodyNotes(ctx, ['C4']);
+        assert(ctx.host.querySelectorAll('[data-ref="beatReport"] li.is-full').length === 3, 'Kết quả không tự cập nhật sau khi sửa');
+        click(ctx.host, '[data-ref="checkButton"]');
+        assert(ctx.host.querySelector('[data-ref="message"]').textContent.indexOf('Cả 3 ô nhịp đều đủ 3 phách') !== -1, 'Thiếu lời khen');
+        assert(celebrated.join() === 'sang-tao', 'Không chúc mừng khi các ô nhịp đều đủ');
+        var actions = ctx.log.currentSession().entries.filter(function (e) { return e.action === 'check-beats'; });
+        assert(actions.length === 2 && actions[1].detail === 'Kiểm tra nhịp 3/4: 3/3 ô nhịp đủ phách', 'Nhật ký: ' + JSON.stringify(actions.map(function (a) { return a.detail; })));
+        return 'đủ / thừa 1 / thiếu 1 → sửa → 3/3 ô nhịp đủ, chúc mừng';
+      } finally {
+        window.removeEventListener(AppShared.CELEBRATE_EVENT, onCelebrate);
+      }
     }]
   ];
 

@@ -2,6 +2,11 @@
 
 Web app giúp học sinh lớp 4–5 nhận biết, đọc và nghe 8 nốt Đô₄ – Đô₅ trên khuông nhạc khóa Sol.
 
+**Dùng thử trên mạng (GitHub Pages):** <https://dungptt-dng.github.io/ai-music-lab/> ·
+trang kiểm thử: <https://dungptt-dng.github.io/ai-music-lab/tests/kiem-thu.html>.
+GitHub Pages chỉ phục vụ trang tĩnh, nên trên website này Trợ lý giáo viên luôn báo "chưa có trợ lý AI";
+các hoạt động của học sinh dùng đầy đủ.
+
 > **Trạng thái:** Giai đoạn 6 (đã có hồ sơ dự thi và PowerPoint – xem mục 6) – **nguyên mẫu học tập số có kiến trúc mở rộng AI**.
 > Mọi hoạt động của học sinh (Khuông nhạc, Nghe cao độ, Trắc nghiệm, Kéo thả, Sáng tạo, Báo cáo kèm gợi ý luyện tập)
 > **không dùng AI**: âm thanh tổng hợp (Web Audio API), câu hỏi và gợi ý theo quy tắc nhạc lý cố định; không hỏi họ tên,
@@ -244,7 +249,10 @@ bằng mắt từng trang PDF); file .pptx mở lại được, 18 trang đều 
 Trước khi nộp:
 
 - [ ] Điền tên tác giả, đơn vị, liên hệ trong hồ sơ (`ho-so/nguon/ho-so-du-thi.html`) và trang 1, 18 của PowerPoint.
-- [ ] Đưa website lên mạng, thay ô "Mã QR website" ở trang cuối bằng mã QR thật.
+- [ ] Thay ô "Mã QR website" ở trang cuối bằng mã QR thật của <https://dungptt-dng.github.io/ai-music-lab/>
+  (hoặc địa chỉ Cloudflare Pages nếu triển khai cả Trợ lý giáo viên).
+- [ ] Hồ sơ (.docx/.pdf/.pptx), thư mục `ho-so/nguon/` và `LENH.docx` cố ý không đưa lên kho GitHub công khai
+  (xem `.gitignore`); giữ bản trên máy.
 - [ ] Thực hiện kế hoạch thử nghiệm; chỉ điền số liệu đã thu thập thật vào bảng ở trang 16 và Phụ lục C.
 - [ ] Thu minh chứng hợp pháp (có đồng ý, dùng mã số thay họ tên): ảnh tiết học, giai điệu học sinh tạo, CSV, phiếu phản hồi.
 - [ ] Xem lại toàn bộ file PDF bằng mắt; mở PowerPoint trên máy trình chiếu để kiểm tra phông chữ và biểu tượng.

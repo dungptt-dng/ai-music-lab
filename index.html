@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI MUSIC LAB – Phòng thí nghiệm âm nhạc số</title>
+  <meta name="description" content="Học sinh lớp 4–5 nhận biết, đọc và nghe 8 nốt nhạc trên khuông khóa Sol.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;700;800&display=swap&subset=vietnamese" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">♪</span>
+      <div>
+        <h1>AI MUSIC LAB</h1>
+        <p class="brand-sub">Phòng thí nghiệm âm nhạc số · Lớp 4–5</p>
+      </div>
+    </div>
+    <nav class="app-nav" role="tablist" aria-label="Các hoạt động">
+      <button type="button" role="tab" data-view="khuong-nhac" aria-selected="true"><span aria-hidden="true">🎼</span> Khuông nhạc</button>
+      <button type="button" role="tab" data-view="nghe-cao-do" aria-selected="false"><span aria-hidden="true">👂</span> Nghe cao độ</button>
+      <button type="button" role="tab" data-view="trac-nghiem" aria-selected="false"><span aria-hidden="true">✅</span> Trắc nghiệm</button>
+      <button type="button" role="tab" data-view="keo-tha" aria-selected="false"><span aria-hidden="true">🎯</span> Kéo thả</button>
+      <button type="button" role="tab" data-view="sang-tao" aria-selected="false"><span aria-hidden="true">🎹</span> Sáng tạo</button>
+      <button type="button" role="tab" data-view="bao-cao" aria-selected="false"><span aria-hidden="true">📊</span> Báo cáo</button>
+    </nav>
+  </header>
+
+  <main class="app-main">
+    <section id="view-khuong-nhac" aria-label="Khuông nhạc tương tác"></section>
+    <section id="view-nghe-cao-do" aria-label="Nghe cao độ" hidden></section>
+    <section id="view-trac-nghiem" aria-label="Trắc nghiệm" hidden></section>
+    <section id="view-keo-tha" aria-label="Kéo thả nốt vào khuông" hidden></section>
+    <section id="view-sang-tao" aria-label="Phòng sáng tạo giai điệu" hidden></section>
+    <section id="view-bao-cao" aria-label="Báo cáo kết quả luyện tập" hidden></section>
+    <section id="view-tro-ly-giao-vien" aria-label="Trợ lý giáo viên dùng AI" hidden></section>
+  </main>
+
+  <footer class="app-footer">
+    <p>Phiên bản nguyên mẫu – Giai đoạn 5: Khuông nhạc tương tác, Nghe cao độ, Trắc nghiệm, Kéo thả nốt,
+      Phòng sáng tạo giai điệu, Báo cáo kèm gợi ý luyện tập. Âm thanh được tổng hợp bằng Web Audio API. Câu hỏi và gợi ý
+      luyện tập được tạo theo quy tắc nhạc lý cố định, <strong>không dùng AI</strong>. Các hoạt động của học sinh không hỏi
+      họ tên và không gửi dữ liệu lên mạng; kết quả chỉ được lưu trong trình duyệt khi người dùng bật lưu ở mục Báo cáo.</p>
+    <p><a href="#tro-ly-giao-vien">Dành cho giáo viên: Trợ lý soạn câu hỏi và hoạt động (dùng AI – Claude của Anthropic)</a>
+      – chỉ chạy khi trường đã cài máy chủ.</p>
+  </footer>
+
+  <noscript><p class="noscript">Ứng dụng cần bật JavaScript để hoạt động.</p></noscript>
+
+  <script src="js/notes.js"></script>
+  <script src="js/shared.js"></script>
+  <script src="js/practice-log.js"></script>
+  <script src="js/staff.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/staff-activity.js"></script>
+  <script src="js/listening-activity.js"></script>
+  <script src="js/question-bank.js"></script>
+  <script src="js/quiz-activity.js"></script>
+  <script src="js/drag-activity.js"></script>
+  <script src="js/melody-activity.js"></script>
+  <script src="js/practice-advisor.js"></script>
+  <script src="js/report.js"></script>
+  <script src="js/teacher-assistant.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    AiMusicLab.start();
+  </script>
+</body>
+</html>

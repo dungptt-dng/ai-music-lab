@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kiểm thử AI MUSIC LAB</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <style>
+    body { display: block; padding: 16px; }
+    h1 { color: var(--primary); margin: 0 0 4px; }
+    .summary { font-size: 1.2rem; font-weight: 800; padding: 12px 16px; border-radius: 12px; margin: 12px 0; }
+    .summary.pass { background: var(--good-soft); color: var(--good); }
+    .summary.fail { background: #ffe3e3; color: #b42318; }
+    table { border-collapse: collapse; width: 100%; background: #fff; margin-bottom: 20px; font-size: 0.9rem; }
+    th, td { border: 1px solid #e3ddf0; padding: 6px 8px; text-align: left; vertical-align: top; }
+    th { background: var(--primary-soft); }
+    td.ok { color: var(--good); font-weight: 700; }
+    td.bad { color: #b42318; font-weight: 700; }
+    td.na { color: var(--ink-soft); font-style: italic; }
+    .detail { display: block; font-weight: 500; color: var(--ink-soft); font-size: 0.8rem; }
+    #sandbox { margin-top: 24px; }
+    #sandbox > div { margin-bottom: 12px; }
+    /* Tắt hiệu ứng chuyển cảnh để đọc ngay kết quả cuối (trang chạy nền không vẽ khung hình). */
+    .no-transition * { transition: none !important; }
+  </style>
+</head>
+<body>
+  <h1>Kiểm thử tự động – Giai đoạn 1 đến 5</h1>
+  <p>Trang này tự chạy khi mở. Âm thanh trong các phép thử giao diện được giả lập (không phát ra loa);
+    tần số được đo từ âm thanh tổng hợp thật bằng OfflineAudioContext.</p>
+  <div id="summary" class="summary">Đang chạy…</div>
+
+  <h2>Bảng kiểm thử 8 nốt</h2>
+  <table id="note-matrix"></table>
+
+  <div id="sections"></div>
+
+  <div id="sandbox" aria-hidden="true"></div>
+
+  <script src="../js/notes.js"></script>
+  <script src="../js/shared.js"></script>
+  <script src="../js/practice-log.js"></script>
+  <script src="../js/staff.js"></script>
+  <script src="../js/audio.js"></script>
+  <script src="../js/staff-activity.js"></script>
+  <script src="../js/listening-activity.js"></script>
+  <script src="../js/question-bank.js"></script>
+  <script src="../js/quiz-activity.js"></script>
+  <script src="../js/drag-activity.js"></script>
+  <script src="../js/melody-activity.js"></script>
+  <script src="../js/practice-advisor.js"></script>
+  <script src="../js/report.js"></script>
+  <script src="../js/teacher-assistant.js"></script>
+  <script src="tests.js"></script>
+</body>
+</html>

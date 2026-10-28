@@ -1,0 +1,17 @@
+# Hồ sơ dự thi và đề bài: giữ trên máy, không đưa lên kho công khai
+LENH.docx
+/Ho-so-du-thi-AI-MUSIC-LAB.pdf
+ho-so/*.docx
+ho-so/*.pdf
+ho-so/*.pptx
+ho-so/nguon/
+~$*
+
+# Triển khai Cloudflare
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+
+# Cấu hình máy phát triển
+.claude/

@@ -1,0 +1,9 @@
+# Cấu hình Cloudflare Pages cho AI MUSIC LAB.
+# Trang tĩnh lấy từ thư mục dist (do tools/build-site.mjs tạo); máy chủ AI lấy từ thư mục functions/.
+# KHÔNG ghi khóa API vào file này. Đặt ANTHROPIC_API_KEY và TEACHER_ACCESS_CODE dạng Secret:
+#   Cloudflare → Workers & Pages → (dự án) → Settings → Variables and Secrets
+#   hoặc: npx wrangler pages secret put ANTHROPIC_API_KEY
+name = "ai-music-lab"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-10-01"
+compatibility_flags = ["nodejs_compat"]

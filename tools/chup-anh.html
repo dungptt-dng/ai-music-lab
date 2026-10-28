@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chụp ảnh giao diện</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; }
+    iframe { border: 0; width: 100%; height: 100%; display: block; }
+  </style>
+</head>
+<body>
+  <!--
+    Công cụ cho người phát triển (không đưa lên website): mở ứng dụng trong khung, thao tác như người dùng
+    rồi để Edge/Chrome chạy ẩn chụp màn hình – dùng cho ảnh minh họa trong hồ sơ (tools/chup-anh.ps1).
+    Tham số: ?view=<mục>&demo=<thao tác>&scroll=<bộ chọn CSS cần cuộn tới>
+    Không tạo số liệu nào ngoài những gì các thao tác dưới đây thực sự bấm.
+  -->
+  <iframe id="app" title="AI MUSIC LAB"></iframe>
+  <script>
+    var params = new URLSearchParams(location.search);
+    var view = params.get('view') || 'khuong-nhac';
+    var demo = params.get('demo') || '';
+    var frame = document.getElementById('app');
+
+    function tapNote(doc, win, id) {
+      doc.querySelector('#view-khuong-nhac .note[data-note="' + id + '"] .note-head')
+        .dispatchEvent(new win.MouseEvent('click', { bubbles: true }));
+    }
+
+    var DEMOS = {
+      // Chạm nốt Sol₄ để hiện thẻ thông tin nốt.
+      'cham-not': function (doc, win) { tapNote(doc, win, 'G4'); },
+      // Chế độ Tìm nốt: chạm sai một lần (để thấy phản hồi gợi ý).
+      'tim-not-sai': function (doc, win) {
+        doc.querySelector('#view-khuong-nhac [data-mode="find"]').click();
+        var label = doc.querySelector('#view-khuong-nhac [data-ref-target]').textContent;
+        var wrong = win.MusicNotes.NOTES.filter(function (n) { return n.label !== label; })[0];
+        tapNote(doc, win, wrong.id);
+      },
+      // Phòng sáng tạo: bấm mẫu khởi đầu đầu tiên.
+      'mau-giai-dieu': function (doc) {
+        doc.querySelector('#view-sang-tao [data-pattern="0"]').click();
+      },
+      // Báo cáo: người phát triển trả lời thử 4 câu Tìm nốt (sai 1 lần ở câu đầu) rồi mở Báo cáo.
+      // (Câu mới tự hiện sau khoảng 1,4 giây nên phải chờ giữa các lần trả lời.)
+      'bao-cao-thu': function (doc, win) {
+        doc.querySelector('#view-khuong-nhac [data-mode="find"]').click();
+        var i = 0;
+        return new Promise(function (resolve) {
+          (function answer() {
+            var label = doc.querySelector('#view-khuong-nhac [data-ref-target]').textContent;
+            var target = win.MusicNotes.NOTES.filter(function (n) { return n.label === label; })[0];
+            if (i === 0) tapNote(doc, win, win.MusicNotes.NOTES.filter(function (n) { return n !== target; })[0].id);
+            tapNote(doc, win, target.id);
+            i += 1;
+            if (i < 4) { setTimeout(answer, 1600); return; }
+            win.location.hash = 'bao-cao';
+            setTimeout(resolve, 300);
+          })();
+        });
+      }
+    };
+
+    frame.onload = function () {
+      var win = frame.contentWindow, doc = win.document;
+      setTimeout(function () {
+        var run;
+        try { run = DEMOS[demo] && DEMOS[demo](doc, win); } catch (e) { document.title = 'Lỗi: ' + e.message; }
+        Promise.resolve(run).then(function () { setTimeout(finish, 400); });
+        function finish() {
+          var target = params.get('scroll') && doc.querySelector(params.get('scroll'));
+          if (target) target.scrollIntoView({ block: 'start' });
+          window.__done = true;
+        }
+      }, 400);
+    };
+    frame.src = '../index.html#' + view;
+  </script>
+</body>
+</html>

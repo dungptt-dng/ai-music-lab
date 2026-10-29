@@ -77,6 +77,27 @@ body {
 }
 .app-footer p { margin: 0; }
 
+/* Thẻ giáo viên thực hiện */
+.teacher-card {
+  display: flex; align-items: center; gap: 16px;
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  border-left: 6px solid var(--primary);
+  padding: 14px 18px; margin-bottom: 14px;
+  color: var(--ink); font-size: 0.95rem;
+}
+.teacher-photo {
+  flex: none; width: 96px; height: 96px; border-radius: 50%;
+  object-fit: cover; object-position: 45% 30%;
+  border: 4px solid var(--primary-soft);
+}
+.teacher-info { min-width: 0; overflow-wrap: anywhere; }
+.teacher-role { color: var(--accent); font-weight: 800; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.6px; }
+.teacher-name { color: var(--primary); font-weight: 800; font-size: 1.25rem; }
+.teacher-info a { color: var(--primary); font-weight: 700; }
+@media (max-width: 480px) {
+  .teacher-card { flex-direction: column; text-align: center; }
+}
+
 /* ---------- Khung hoạt động ---------- */
 .activity {
   background: var(--surface);

@@ -1,5 +1,5 @@
 /*
- * Tạo thư mục dist/ để đưa lên Cloudflare Pages: CHỈ chép những gì trình duyệt cần (index.html, css, js).
+ * Tạo thư mục dist/ để đưa lên Cloudflare Pages: CHỈ chép những gì trình duyệt cần (index.html, css, js, img).
  * Không chép tests/, docs/, functions/, tools/, LENH.docx… lên trang công khai.
  * Thư mục functions/ được Cloudflare đóng gói riêng thành máy chủ.
  */
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
-const PUBLIC = ['index.html', 'css', 'js'];
+const PUBLIC = ['index.html', 'css', 'js', 'img'];
 
 rmSync(dist, { recursive: true, force: true });
 mkdirSync(dist);
